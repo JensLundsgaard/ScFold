@@ -21,9 +21,9 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     val_groups = split_df[val_mask]["pdb"].to_list()
     train_groups = split_df[~val_mask]["pdb"].to_list()
 
-    train_set = H5Dataset(h5_path, random_indices=random_indices, groups=train_groups):
-    valid_set = H5Dataset(h5_path, random_indices=None, groups=val_groups):
-    test_set = H5Dataset(h5_path, random_indices=None, groups=[]):
+    train_set = H5Dataset(h5_path, random_indices=random_indices, groups=train_groups)
+    valid_set = H5Dataset(h5_path, random_indices=None, groups=val_groups)
+    test_set = H5Dataset(h5_path, random_indices=None, groups=[])
 
     assert test_set.__len__() == 0, f"test set should have len 0, has len {test_set.__len__()}"
     
