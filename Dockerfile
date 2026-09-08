@@ -12,7 +12,7 @@ RUN pip3 install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-s
 
 RUN pip3 install --no-cache-dir torch-geometric
 
-RUN pip3 install --no-cache-dir scipy biopython scikit-learn tqdm easydict pyyaml
+RUN pip3 install --no-cache-dir scipy biopython scikit-learn tqdm easydict pyyaml pandas numpy
 
 
 
