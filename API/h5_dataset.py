@@ -35,7 +35,6 @@ class H5Dataset(data.Dataset):
         group_name = self.groups[group_idx]
 
         coordinates = torch.from_numpy(self.h5_file[group_name + "/coordinates"][:, seq_idx])
-AME_ORIGIN]])
         y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name + "/residues"][:]])
         traj_id = group_name
         return {'title':traj_id, 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
