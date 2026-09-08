@@ -16,7 +16,7 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     split_df = pd.read_csv(osp.join("..", "atlas_cross_val_index.csv"))
     val_mask = split_df["cross_val"] == 0 # change to whatever cross val sets you want
 
-    random_indices = split_df[~val_mask]["indices"].to_list()
+    random_indices = split_df[~val_mask]["random_indices"].to_list()
     
     val_groups = split_df[val_mask]["pdb"].to_list()
     train_groups = split_df[~val_mask]["pdb"].to_list()
