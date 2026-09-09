@@ -35,7 +35,7 @@ class H5Dataset(data.Dataset):
         group_idx, seq_idx = self.index[idx]
         group_name = self.groups[group_idx]
 
-        coordinates = torch.from_numpy(self.h5_file[group_name + "/coordinates"][:, seq_idx])
+        coordinates = self.h5_file[group_name + "/coordinates"][:, seq_idx]
         y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name + "/residues"][:]])
         traj_id = group_name
         return {'title':traj_id, 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
@@ -62,3 +62,4 @@ class H5Dataset(data.Dataset):
                 for j in range(h5_file[group_name + "/" + "coordinates"].shape[1]):
                     index.append((i, j)) # otherwise we need to feed in whole sequences to do majority voting on
         return index
+
