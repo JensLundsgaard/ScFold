@@ -14,6 +14,7 @@ import h5py
 
 class H5Dataset(data.Dataset):
     BACKBONE_ATOMS = ["CA", "N", "C", "O"]
+    REQUIRED_DATASETS = {"coordinates", "dihedrals", "spinet_features","frame_maps","residues"}
     def __init__(self, h5_path, random_indices=None, groups=None):
         self.h5_path = h5_path
         self.h5_file = None
