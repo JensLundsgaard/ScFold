@@ -23,7 +23,7 @@ class H5Dataset(data.Dataset):
 
         with h5py.File(self.h5_path) as f:
             self.build_groups(f)
-            self.build_static_index(f)
+            self.index = self.build_static_index(f)
 
     def __len__(self):
         return len(self.index)
