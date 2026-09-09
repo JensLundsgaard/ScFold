@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 import torch.utils.data as data
 import h5py
+import torch
 
 class H5Dataset(data.Dataset):
     BACKBONE_ATOMS = ["CA", "N", "C", "O"]
