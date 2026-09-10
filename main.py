@@ -77,7 +77,7 @@ class Exp:
                     valid_loss, valid_perplexity = self.valid()
 
                     # self._save(name=str(epoch))
-                    self.test()
+                    #self.test()
                 
                 print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
             

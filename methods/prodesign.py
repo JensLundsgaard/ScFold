@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 import torch.nn as nn
+import torch.nn.functional as F
 import torch
 
 from .base_method import Base_method
@@ -48,27 +49,36 @@ class ProDesign(Base_method):
 
     def valid_one_epoch(self, valid_loader):
         self.model.eval()
-        valid_sum, valid_weights = 0., 0.
+        valid_losses = []
         valid_pbar = tqdm(valid_loader)
+
+        valid_acc_1s, valid_acc_5s, valid_acc_10s = [],[],[]
+
 
         with torch.no_grad():
             for batch in valid_pbar:
                 X, S, score, mask, lengths = cuda(batch, device=self.device)
+
+
+                assert (lengths == X.shape[1]).all().item(), "dataloader is not setup for majority voting"
                 X, S, score, h_V, h_E, E_idx, batch_id, mask_bw, mask_fw, decoding_order = self.model._get_features(S,
                                                                                                                     score,
                                                                                                                     X=X,
                                                                                                                     mask=mask)
-                log_probs = self.model(h_V, h_E, E_idx, batch_id,S,mask)
-                loss = self.criterion(log_probs, S)
+                logits, _ = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logits=True)
+                loss = self.criterion(logits, S)
 
-                valid_sum += torch.sum(loss * mask).cpu().data.numpy()
-                valid_weights += torch.sum(mask).cpu().data.numpy()
+                valid_losses.append(loss.cpu().item())
+
+                preds = F.softmax(logits).mean(dim=0)
+                targets = S[0] # num_res
+
+
+                
 
                 valid_pbar.set_description('valid loss: {:.4f}'.format(loss.mean().item()))
 
-            valid_loss = valid_sum / valid_weights
-            valid_perplexity = np.exp(valid_loss)
-        return valid_loss, valid_perplexity
+        return valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s
 
     def test_one_epoch(self, test_loader):
         self.model.eval()
