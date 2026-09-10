@@ -74,7 +74,7 @@ class Exp:
 
             if epoch % self.args.log_step == 0:
                 with torch.no_grad():
-                    valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s = self.valid()
+                    valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s = self.valid(epoch)
 
                     # self._save(name=str(epoch))
                     #self.test()
@@ -90,8 +90,8 @@ class Exp:
         best_model_path = osp.join(self.path, 'checkpoint.pth')
         self.method.model.load_state_dict(torch.load(best_model_path))
         
-    def valid(self):
-        return self.method.valid_one_epoch(self.valid_loader)
+    def valid(self, epoch):
+        return self.method.valid_one_epoch(self.valid_loader, epoch=epoch)
 
     def test(self):
         test_perplexity, test_recovery, test_subcat_recovery = self.method.test_one_epoch(self.test_loader)

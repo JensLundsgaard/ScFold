@@ -71,7 +71,7 @@ class ProDesign(Base_method):
         train_perplexity = np.exp(train_loss)
         return train_loss, train_perplexity
 
-    def valid_one_epoch(self, valid_loader):
+    def valid_one_epoch(self, valid_loader, epoch=-1):
         self.model.eval()
         valid_losses = []
         valid_pbar = tqdm(valid_loader)
@@ -102,14 +102,14 @@ class ProDesign(Base_method):
                 valid_losses.append(loss.cpu().item())
 
                 logits = F.softmax(logits)
-                
-                violin_logits = logits[::10, :20].cpu()
-                for j in range(violin_logits.shape[1]):
-                    distributions = violin_logits[:, j].numpy()
-                    fig, ax = plt.subplots()
-                    ax.violinplot(distributions, np.arange(distributions.shape[0]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True)
-                    fig.savefig(os.path.join("..", f"{i}_{j}.png"))
-                    plt.close(fig)
+                if epoch == 7:
+                    violin_logits = logits[::10, :20].cpu()
+                    for j in range(violin_logits.shape[1]):
+                        distributions = violin_logits[:, j].numpy()
+                        fig, ax = plt.subplots()
+                        ax.violinplot(distributions, np.arange(distributions.shape[0]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True)
+                        fig.savefig(os.path.join("..", f"{i}_{j}.png"))
+                        plt.close(fig)
 
 
                 grouped_logits = logits.mean(dim=0)
