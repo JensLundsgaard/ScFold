@@ -107,7 +107,7 @@ class ProDesign(Base_method):
                 for j in range(violin_logits.shape[1]):
                     distributions = violin_logits[:, j].numpy()
                     fig, ax = plt.subplots()
-                    ax.violinplot(distributions.T, np.arange(distributions.shape[1]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True, bw_method=0.5, quantiles=[[0.1], [], [], [0.175, 0.954], [0.75], [0.25]])
+                    ax.violinplot(distributions, np.arange(distributions.shape[0]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True, bw_method=0.5, quantiles=[[0.1], [], [], [0.175, 0.954], [0.75], [0.25]])
                     fig.savefig(os.path.join("..", f"{i}_{j}.png"))
                     plt.close(fig)
 
