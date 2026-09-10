@@ -84,12 +84,12 @@ class ProDesign(Base_method):
                                                                                                                     mask=mask)
 
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
+                loss = self.criterion(logits, S)
 
                 logits = logits.reshape(200, -1, 20)
                 S = S.reshape(200, -1)
                 batch_id = batch_id.reshape(200, -1)
                 assert (batch_id == torch.arange(200, device=batch_id.device)[:, None]).all().item(), "S is misshapen"
-                loss = self.criterion(logits, S)
 
                 valid_losses.append(loss.cpu().item())
 
