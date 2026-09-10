@@ -85,7 +85,7 @@ class ProDesign(Base_method):
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
 
                 print(S.shape)
-                print(logit.shape)
+                print(logits.shape)
                 loss = self.criterion(logits, S)
 
                 valid_losses.append(loss.cpu().item())
