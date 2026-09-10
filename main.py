@@ -81,11 +81,11 @@ class Exp:
                 
                 print(f" {sum(params.numel() for params in self.method.model.parameters() if params.requires_grad)} & ${valid_acc_1s.mean():.3f} \\pm {valid_acc_1s.std():.3f}$ & ${valid_acc_5s.mean():.3f} \\pm {valid_acc_5s.std():.3f}$ & ${valid_acc_10s.mean():.3f} \\pm {valid_acc_10s.std():.3f}$ & ${np.exp(valid_losses).mean():.3f} \\pm {np.exp(valid_losses).std():.3f}$ ")
 
-                recorder(valid_loss, self.method.model, self.path)
-                if recorder.early_stop:
-                    print("Early stopping")
-                    logging.info("Early stopping")
-                    break
+                #recorder(valid_loss, self.method.model, self.path)
+                #if recorder.early_stop:
+                #    print("Early stopping")
+                #    logging.info("Early stopping")
+                #    break
             
         best_model_path = osp.join(self.path, 'checkpoint.pth')
         self.method.model.load_state_dict(torch.load(best_model_path))
