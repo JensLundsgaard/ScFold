@@ -82,7 +82,7 @@ class ProDesign(Base_method):
                                                                                                                     score,
                                                                                                                     X=X,
                                                                                                                     mask=mask)
-                logits, _ = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logits=True)
+                logits, _ = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
                 loss = self.criterion(logits, S)
 
                 valid_losses.append(loss.cpu().item())
