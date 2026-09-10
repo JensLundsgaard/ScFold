@@ -90,6 +90,8 @@ class ProDesign(Base_method):
                 grouped_logits = F.softmax(logits).mean(dim=0)
                 targets = S[0] # num_res
 
+                print(grouped_logits.shape)
+                print(targets.shape)
                 valid_acc_1s.append(top_k_acc(grouped_logits, targets, 1)) 
                 valid_acc_5s.append(top_k_acc(grouped_logits, targets, 5)) 
                 valid_acc_5s.append(top_k_acc(grouped_logits, targets, 10)) 
