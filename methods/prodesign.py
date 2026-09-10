@@ -3,6 +3,8 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import matplotlib.pyplot as plt
+import os
 
 from .base_method import Base_method
 from .utils import cuda
@@ -76,9 +78,9 @@ class ProDesign(Base_method):
 
         valid_acc_1s, valid_acc_5s, valid_acc_10s = [],[],[]
 
-
+        os.makedirs(os.path.join("..", "plots"), exist_ok=True)
         with torch.no_grad():
-            for batch in valid_pbar:
+            for i, batch in enumerate(valid_pbar):
                 X, S, score, mask, lengths = cuda(batch, device=self.device)
 
 
@@ -87,6 +89,7 @@ class ProDesign(Base_method):
                                                                                                                     score,
                                                                                                                     X=X,
                                                                                                                     mask=mask)
+
 
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
                 loss = self.criterion(logits, S)
@@ -98,7 +101,18 @@ class ProDesign(Base_method):
 
                 valid_losses.append(loss.cpu().item())
 
-                grouped_logits = F.softmax(logits).mean(dim=0)
+                logits = F.softmax(logits)
+                
+                violin_logits = logits[::10, :20].cpu()
+                for j in range(violin_logits.shape[1]):
+                    distributions = violin_logits[:, j].numpy()
+                    fig, ax = plt.subplots()
+                    ax.violinplot(distributions.T, np.arange(distributions.shape[1]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True, bw_method=0.5, quantiles=[[0.1], [], [], [0.175, 0.954], [0.75], [0.25]])
+                    fig.savefig(os.path.join("..", f"{i}_{j}.png"))
+                    plt.close(fig)
+
+
+                grouped_logits = logits.mean(dim=0)
                 targets = S[0] # num_res
 
                 valid_acc_1s.append(top_k_acc(grouped_logits, targets, 1)) 
