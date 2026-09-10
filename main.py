@@ -3,7 +3,7 @@ import pickle
 import json
 import torch
 import os.path as osp
-
+import numpy as np
 
 import warnings
 
@@ -74,13 +74,13 @@ class Exp:
 
             if epoch % self.args.log_step == 0:
                 with torch.no_grad():
-                    valid_loss, valid_perplexity = self.valid()
+                    valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s = self.valid()
 
                     # self._save(name=str(epoch))
                     #self.test()
                 
-                print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
-            
+                print(f" {sum(params.numel() for params in self.method.model.parameters() if params.requires_grad())} & ${valid_acc_1s.mean():.3f} \\pm {valid_acc_1s.std():.3f}$ & ${valid_acc_5s.mean():.3f} \\pm {valid_acc_5s.std():.3f}$ & ${valid_acc_10s.mean():.3f} \\pm {valid_acc_10s.std():.3f}$ & ${np.exp(valid_losses).mean():.3f} \\pm {np.exp(valid_losses).std():.3f}$ ")
+
                 recorder(valid_loss, self.method.model, self.path)
                 if recorder.early_stop:
                     print("Early stopping")
@@ -91,11 +91,7 @@ class Exp:
         self.method.model.load_state_dict(torch.load(best_model_path))
         
     def valid(self):
-        valid_loss, valid_perplexity = self.method.valid_one_epoch(self.valid_loader)
-
-        print_log('Valid Perp: {0:.4f}'.format(valid_perplexity))
-        
-        return valid_loss, valid_perplexity
+        return self.method.valid_one_epoch(self.valid_loader)
 
     def test(self):
         test_perplexity, test_recovery, test_subcat_recovery = self.method.test_one_epoch(self.test_loader)

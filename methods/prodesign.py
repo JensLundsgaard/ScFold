@@ -9,6 +9,23 @@ from .utils import cuda
 from .prodesign_model import ProDesign_Model
 from torch_scatter import scatter_sum
 
+def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
+    """
+    logits: B, num_classes
+    targets: B, type=int/long > 0 
+    """
+    assert k > 0, "k must be >0"
+    if (k == 1):
+        preds = F.one_hot(logits.argmax(dim=-1), num_classes=logits.shape[1]).float()
+        return torch.einsum("bi,bi->b", preds, F.one_hot(targets, num_classes=logits.shape[1]).float()).sum().item() / logits.shape[0]
+
+    hot_logits = torch.zeros_like(logits) 
+    indices = torch.topk(logits, k, dim=-1).indices
+    hot_logits = hot_logits.scatter_(1, indices, 1).float()
+    correct_mask = torch.einsum("bi,bi->b", hot_logits, F.one_hot(targets, num_classes=logits.shape[1]).float())
+    return correct_mask.sum().item() / correct_mask.shape[0] 
+ 
+
 
 class ProDesign(Base_method):
     def __init__(self, args, device, steps_per_epoch):
@@ -70,15 +87,16 @@ class ProDesign(Base_method):
 
                 valid_losses.append(loss.cpu().item())
 
-                preds = F.softmax(logits).mean(dim=0)
+                grouped_logits = F.softmax(logits).mean(dim=0)
                 targets = S[0] # num_res
 
+                valid_acc_1s.append(top_k_acc(grouped_logits, targets, 1)) 
+                valid_acc_5s.append(top_k_acc(grouped_logits, targets, 5)) 
+                valid_acc_5s.append(top_k_acc(grouped_logits, targets, 10)) 
 
-                
+                valid_pbar.set_description('valid loss: {:.4f}'.format(loss.cpu().item()))
 
-                valid_pbar.set_description('valid loss: {:.4f}'.format(loss.mean().item()))
-
-        return valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s
+        return np.array(valid_losses), np.array(valid_acc_1s), np.array(valid_acc_5s), np.array(valid_acc_10s)
 
     def test_one_epoch(self, test_loader):
         self.model.eval()
