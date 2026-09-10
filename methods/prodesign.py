@@ -9,10 +9,15 @@ from .utils import cuda
 from .prodesign_model import ProDesign_Model
 from torch_scatter import scatter_sum
 
+
 def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
     """
+    author: Jens Lundsgaard 
+
     logits: B, num_classes
     targets: B, type=int/long > 0 
+
+    returns: float \in [0,1] representing acc over the batch
     """
     assert k > 0, "k must be >0"
     if (k == 1):
@@ -98,7 +103,7 @@ class ProDesign(Base_method):
 
                 valid_acc_1s.append(top_k_acc(grouped_logits, targets, 1)) 
                 valid_acc_5s.append(top_k_acc(grouped_logits, targets, 5)) 
-                valid_acc_5s.append(top_k_acc(grouped_logits, targets, 10)) 
+                valid_acc_10s.append(top_k_acc(grouped_logits, targets, 10)) 
 
                 valid_pbar.set_description('valid loss: {:.4f}'.format(loss.cpu().item()))
 
