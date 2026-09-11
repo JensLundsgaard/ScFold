@@ -131,7 +131,7 @@ class ProDesign(Base_method):
 
 
                 grouped_logits = logits.argmax(dim=-1).T # num_res, 200
-                new_logits = batched_bincount(grouped_logits) # num_res, 20
+                new_logits = batched_bincount(grouped_logits, torch.arange(20, device=grouped_logits.device)) # num_res, 20
 
                 targets = S[0] # num_res
 
