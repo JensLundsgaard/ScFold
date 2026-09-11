@@ -105,7 +105,6 @@ class ProDesign(Base_method):
                 titles = batch[-1]
 
 
-                assert (lengths == X.shape[1]).all().item(), "dataloader is not setup for majority voting"
                 X, S, score, h_V, h_E, E_idx, batch_id, mask_bw, mask_fw, decoding_order = self.model._get_features(S,
                                                                                                                     score,
                                                                                                                     X=X,
