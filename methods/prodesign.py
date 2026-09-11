@@ -31,6 +31,7 @@ def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
     hot_logits = hot_logits.scatter_(1, indices, 1).float()
     correct_mask = torch.einsum("bi,bi->b", hot_logits, F.one_hot(targets, num_classes=logits.shape[1]).float())
     return correct_mask.sum().item() / correct_mask.shape[0] 
+
 def batched_bincount(x: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
    
     if x.dtype != torch.long:
@@ -112,10 +113,10 @@ class ProDesign(Base_method):
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
                 loss = self.criterion(logits, S)
 
-                logits = logits.reshape(200, -1, 20)
-                S = S.reshape(200, -1)
-                batch_id = batch_id.reshape(200, -1)
-                assert (batch_id == torch.arange(200, device=batch_id.device)[:, None]).all().item(), "S is misshapen"
+                logits = logits.reshape(batch_id.max().item() + 1, -1, 20)
+                S = S.reshape(batch_id.max().item() + 1, -1)
+                batch_id = batch_id.reshape(batch_id.max().item() + 1, -1)
+                assert (batch_id == torch.arange(batch_id.max().item() + 1, device=batch_id.device)[:, None]).all().item(), "S is misshapen"
 
                 valid_losses.append(loss.cpu().item())
 
@@ -130,7 +131,7 @@ class ProDesign(Base_method):
                         plt.close(fig)
 
 
-                grouped_logits = logits.argmax(dim=-1).T # num_res, 200
+                grouped_logits = logits.argmax(dim=-1).T # num_res, 128
                 new_logits = batched_bincount(grouped_logits, torch.arange(20, device=grouped_logits.device)) # num_res, 20
 
                 targets = S[0] # num_res
