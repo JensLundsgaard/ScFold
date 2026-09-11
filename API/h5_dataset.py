@@ -61,7 +61,7 @@ class H5Dataset(data.Dataset):
                 index.append((i, j))
         else:
             for i, group_name in enumerate(self.groups):
-                for j in range(min(h5_file[group_name + "/" + "coordinates"].shape[1], 200)): # let's just use the first 200, we can do more later
+                for j in range(min(h5_file[group_name + "/" + "coordinates"].shape[1], 128)): # let's just use the first 200, we can do more later
                     index.append((i, j)) # otherwise we need to feed in whole sequences to do majority voting on
         return index
 
