@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import torch
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
 
 from .base_method import Base_method
 from .utils import cuda
@@ -70,7 +71,7 @@ class ProDesign(Base_method):
         train_pbar = tqdm(train_loader)
         for step_idx, batch in enumerate(train_pbar):
             self.optimizer.zero_grad()  # 模型中所有可学习参数的梯度归零
-            X, S, score, mask, lengths = cuda(batch, device=self.device)
+            X, S, score, mask, lengths = cuda(batch[:-1], device=self.device)
             X, S, score, h_V, h_E, E_idx, batch_id, mask_bw, mask_fw, decoding_order = self.model._get_features(S,
                                                                                                                 score,
                                                                                                                 X=X,
@@ -96,11 +97,12 @@ class ProDesign(Base_method):
         valid_pbar = tqdm(valid_loader)
 
         valid_acc_1s, valid_acc_5s, valid_acc_10s = [],[],[]
-
+        seq_names, seq_idxs, seqs = [], [], []
         os.makedirs(os.path.join("..", "plots"), exist_ok=True)
         with torch.no_grad():
             for i, batch in enumerate(valid_pbar):
-                X, S, score, mask, lengths = cuda(batch, device=self.device)
+                X, S, score, mask, lengths = cuda(batch[:-1], device=self.device)
+                titles = batch[-1]
 
 
                 assert (lengths == X.shape[1]).all().item(), "dataloader is not setup for majority voting"
@@ -114,8 +116,8 @@ class ProDesign(Base_method):
 
                 for idx in range(batch_id.max().item() + 1):
                     prot_mask = batch_id == idx
-                    prot_logits = logits[prot_mask] 
 
+                    prot_logits = logits[prot_mask] 
                     prot_S = S[prot_mask] 
 
                     loss = self.criterion(prot_logits, prot_S)
@@ -124,6 +126,11 @@ class ProDesign(Base_method):
                     valid_acc_5s.append(top_k_acc(prot_logits, prot_S, 5)) 
                     valid_acc_10s.append(top_k_acc(prot_logits, prot_S, 10)) 
 
+                    seq_name, seq_idx = titles[idx]
+                    seq_preds = "".join([valid_loader.__class__.alphabet[pred] for pred in prot_logits.argmax(dim=-1).cpu().tolist()])
+                    seqs.append(seq_preds)
+                    seq_names.append(seq_name)
+                    seq_idxs.append(seq_idx)
 
 
                 """
@@ -149,7 +156,8 @@ class ProDesign(Base_method):
 
                 targets = S[0] # num_res
                 """
-
+        seq_pred_df = pd.DataFrame({"seq":seqs, "idx":seq_idxs, "name":seq_names})
+        seq_pred_df.to_csv(os.path.join("..", f"seq_pred_df_{epoch}.csv"))
 
         return np.array(valid_losses), np.array(valid_acc_1s), np.array(valid_acc_5s), np.array(valid_acc_10s)
 
