@@ -111,14 +111,27 @@ class ProDesign(Base_method):
 
 
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
-                loss = self.criterion(logits, S)
 
+                for idx in range(batch_id.max().item() + 1):
+                    prot_mask = batch_id == idx
+                    prot_logits = logits[prot_mask] 
+
+                    prot_S = S[prot_mask] 
+
+                    loss = self.criterion(prot_logits, prot_S)
+                    val_losses.append(loss.item())
+                    valid_acc_1s.append(top_k_acc(prot_logits, prot_S, 1)) 
+                    valid_acc_5s.append(top_k_acc(prot_logits, prot_S, 5)) 
+                    valid_acc_10s.append(top_k_acc(prot_logits, prot_S, 10)) 
+
+
+
+                """
                 logits = logits.reshape(batch_id.max().item() + 1, -1, 20)
                 S = S.reshape(batch_id.max().item() + 1, -1)
                 batch_id = batch_id.reshape(batch_id.max().item() + 1, -1)
                 assert (batch_id == torch.arange(batch_id.max().item() + 1, device=batch_id.device)[:, None]).all().item(), "S is misshapen"
 
-                valid_losses.append(loss.cpu().item())
 
                 logits = F.softmax(logits)
                 if epoch == 7:
@@ -135,12 +148,8 @@ class ProDesign(Base_method):
                 new_logits = batched_bincount(grouped_logits, torch.arange(20, device=grouped_logits.device)) # num_res, 20
 
                 targets = S[0] # num_res
+                """
 
-                valid_acc_1s.append(top_k_acc(new_logits, targets, 1)) 
-                valid_acc_5s.append(top_k_acc(new_logits, targets, 5)) 
-                valid_acc_10s.append(top_k_acc(new_logits, targets, 10)) 
-
-                valid_pbar.set_description('valid loss: {:.4f}'.format(loss.cpu().item()))
 
         return np.array(valid_losses), np.array(valid_acc_1s), np.array(valid_acc_5s), np.array(valid_acc_10s)
 
