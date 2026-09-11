@@ -87,8 +87,9 @@ class Exp:
                 #    logging.info("Early stopping")
                 #    break
             
-        best_model_path = osp.join(self.path, 'checkpoint.pth')
-        self.method.model.load_state_dict(torch.load(best_model_path))
+
+        #best_model_path = osp.join(self.path, 'checkpoint.pth')
+        #self.method.model.load_state_dict(torch.load(best_model_path))
         
     def valid(self, epoch):
         return self.method.valid_one_epoch(self.valid_loader, epoch=epoch)

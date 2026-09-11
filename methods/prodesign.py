@@ -31,7 +31,25 @@ def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
     hot_logits = hot_logits.scatter_(1, indices, 1).float()
     correct_mask = torch.einsum("bi,bi->b", hot_logits, F.one_hot(targets, num_classes=logits.shape[1]).float())
     return correct_mask.sum().item() / correct_mask.shape[0] 
- 
+def batched_bincount(x: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
+   
+    if x.dtype != torch.long:
+        raise TypeError("Input tensor x must be of dtype torch.long")
+    if values.ndim != 1:
+        raise ValueError("values must be a 1D tensor of unique possible values")
+
+    B, N = x.shape
+    num_values = values.numel()
+
+    value_to_index = torch.empty(values.max().item() + 1, dtype=torch.long, device=x.device)
+    value_to_index[values] = torch.arange(num_values, device=x.device)
+    idx = value_to_index[x]  # Shape: (B, N)
+
+    counts = torch.zeros((B, num_values), dtype=torch.long, device=x.device)
+
+    counts.scatter_add_(1, idx, torch.ones_like(idx, dtype=torch.long))
+
+    return counts 
 
 
 class ProDesign(Base_method):
@@ -112,12 +130,14 @@ class ProDesign(Base_method):
                         plt.close(fig)
 
 
-                grouped_logits = logits.mean(dim=0)
+                grouped_logits = logits.argmax(dim=-1).T # num_res, 200
+                new_logits = batched_bincount(grouped_logits) # num_res, 20
+
                 targets = S[0] # num_res
 
-                valid_acc_1s.append(top_k_acc(grouped_logits, targets, 1)) 
-                valid_acc_5s.append(top_k_acc(grouped_logits, targets, 5)) 
-                valid_acc_10s.append(top_k_acc(grouped_logits, targets, 10)) 
+                valid_acc_1s.append(top_k_acc(new_logits, targets, 1)) 
+                valid_acc_5s.append(top_k_acc(new_logits, targets, 5)) 
+                valid_acc_10s.append(top_k_acc(new_logits, targets, 10)) 
 
                 valid_pbar.set_description('valid loss: {:.4f}'.format(loss.cpu().item()))
 
