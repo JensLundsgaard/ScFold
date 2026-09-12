@@ -37,6 +37,8 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
     valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
     test_loader = DataLoader_GTrans(test_set, batch_size=1, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    # test
+    assert len(next(train_loader)) == 6, "train_loader does not output 6 values"
 
     return train_loader, valid_loader, test_loader
 
