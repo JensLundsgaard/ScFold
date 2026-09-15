@@ -119,5 +119,4 @@ if __name__ == '__main__':
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     exp.train()
 
-    print('>>>>>>>>>>>>>>>>>>>>>>>>>> testing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-    valid_perp, valid_rec = exp.valid()
+    exp.method.run.finish()

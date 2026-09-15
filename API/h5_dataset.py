@@ -21,7 +21,7 @@ class H5Dataset(data.Dataset):
         self.h5_path = h5_path
         self.h5_file = None
         self.groups = groups
-        self.random_indices = random_indices # this says which frame we are taking from each traj, we'll just do shuffle=False and batch_size = 1000
+        self.random_indices = random_indices
 
         with h5py.File(self.h5_path) as f:
             self.build_groups(f)
@@ -37,8 +37,8 @@ class H5Dataset(data.Dataset):
         group_idx, seq_idx = self.index[idx]
         group_name = self.groups[group_idx]
 
-        coordinates = self.h5_file[group_name + "/coordinates"][:, seq_idx]
-        y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name + "/residues"][:]])
+        coordinates = self.h5_file[group_name]["/coordinates"][:, seq_idx]
+        y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name]["/residues"][:]])
         traj_id = group_name
         return {'title':(traj_id, seq_idx), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
 

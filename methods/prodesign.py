@@ -11,7 +11,7 @@ from .base_method import Base_method
 from .utils import cuda
 from .prodesign_model import ProDesign_Model
 from torch_scatter import scatter_sum
-
+from API import DataLoader_GTrans
 
 def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
     """
@@ -60,6 +60,13 @@ class ProDesign(Base_method):
         self.model = self._build_model()
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
+        wandb.login(key=os.getenv("WANDB_KEY"))
+        self.run = wandb.init(
+            entity="jenslundsgaard7-uw-madison",
+            project="SheafProtein",
+            name="scFold",
+            config=vars(self.args),
+        ) 
 
     def _build_model(self):
         return ProDesign_Model(self.args).to(self.device)
@@ -100,6 +107,10 @@ class ProDesign(Base_method):
         valid_acc_1s, valid_acc_5s, valid_acc_10s = [],[],[]
         seq_names, seq_idxs, seqs = [], [], []
         os.makedirs(os.path.join("..", "plots"), exist_ok=True)
+        precisions = {res : [] for res in DataLoader_GTrans.alphabet}
+        f1s = {res : [] for res in DataLoader_GTrans.alphabet}
+        recalls = {res : [] for res in DataLoader_GTrans.alphabet}
+        global_confusion_mat = torch.zeros(20, 20)
         with torch.no_grad():
             for i, batch in enumerate(valid_pbar):
                 print(len(batch))
@@ -157,9 +168,22 @@ class ProDesign(Base_method):
 
                 targets = S[0] # num_res
                 """
-        seq_pred_df = pd.DataFrame({"seq":seqs, "idx":seq_idxs, "name":seq_names})
-        seq_pred_df.to_csv(os.path.join("..", f"seq_pred_df_{epoch}.csv"))
+                batch_conf_mat = get_confusion_matrix(targets_cpu, preds, num_classes)
+                global_confusion_mat += batch_conf_mat
 
+                diag = batch_conf_mat.diag()
+                recall = torch.nan_to_num(diag / batch_conf_mat.sum(dim=1), 0.0)
+                precision = torch.nan_to_num(diag / batch_conf_mat.sum(dim=0), 0.0)
+                f1 = torch.nan_to_num(2 * (precision * recall) / (precision + recall), 0.0)
+
+
+                for k, amino_acid in enumerate(DataLoader_GTrans.alphabet):
+                     precisions[amino_acid].append(precision[k].item())
+                     recalls[amino_acid].append(recall[k].item())
+                     f1s[amino_acid].append(f1[k].item())
+
+        seq_pred_df = pd.DataFrame({"seq":seqs, "idx":seq_idxs, "name":seq_names})
+        self.run.log({"seq_df":wandb.Table(dataframe=seq_pred_df)})
         return np.array(valid_losses), np.array(valid_acc_1s), np.array(valid_acc_5s), np.array(valid_acc_10s)
 
     def test_one_epoch(self, test_loader):
