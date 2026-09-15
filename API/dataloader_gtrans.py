@@ -10,7 +10,7 @@ class DataLoader_GTrans(torch.utils.data.DataLoader):
         super(DataLoader_GTrans, self).__init__(dataset, batch_size, shuffle, sampler, batch_sampler, num_workers, collate_fn,**kwargs)
         self.featurizer = collate_fn
 
-def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, np.ndarray, list[str]):
+def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, np.ndarray, list[str]]:
     """ Pack and pad batch into torch tensors """
     alphabet = DataLoader_GTrans.alphabet
     B = len(batch)
