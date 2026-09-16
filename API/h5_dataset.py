@@ -37,8 +37,8 @@ class H5Dataset(data.Dataset):
         group_idx, seq_idx = self.index[idx]
         group_name = self.groups[group_idx]
 
-        coordinates = self.h5_file[group_name]["/coordinates"][:, seq_idx]
-        y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name]["/residues"][:]])
+        coordinates = self.h5_file[group_name]["coordinates"][:, seq_idx]
+        y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name]["residues"][:]])
         traj_id = group_name
         return {'title':(traj_id, seq_idx), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
 
