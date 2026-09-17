@@ -95,13 +95,7 @@ class Exp:
         return self.method.valid_one_epoch(self.valid_loader, epoch=epoch)
 
     def test(self):
-        test_perplexity, test_recovery, test_subcat_recovery = self.method.test_one_epoch(self.test_loader)
-        print_log('Test Perp: {0:.4f}, Test Rec: {1:.4f}\n'.format(test_perplexity, test_recovery))
-
-        for cat in test_subcat_recovery.keys():
-            print_log('Category {0} Rec: {1:.4f}\n'.format(cat, test_subcat_recovery[cat]))
-
-        return test_perplexity, test_recovery
+        return self.method.valid_one_epoch(self.test_loader, epoch=-1)
 
 
 if __name__ == '__main__':
