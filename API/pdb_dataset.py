@@ -18,7 +18,6 @@ from Bio.PDB.PDBIO import PDBIO, Select
 from tqdm import tqdm
 import pandas as pd
 from h5_dataset import BACKBONE_ATOMS 
-BACKBONE_ATOMS = ["CA", "N", "C", "O"]
 
 def download_pdb(pdb_id: str) -> str:
     url = RCSB_URL.format(pdb_id=pdb_id.upper())
@@ -34,7 +33,7 @@ def extract_backbone(pdb_text: str, pdb_id: str, chain:str) -> torch.Tensor:
     model = next(structure.get_models())
     residues = []
     for chain in model:
-        if chain chain):
+        if chain.has_id(chain):
             for residue in chain:
                 if not residue.has_id("CA"):
                     continue
