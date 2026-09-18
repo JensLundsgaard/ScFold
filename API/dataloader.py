@@ -6,7 +6,10 @@ from API.cath_dataset import CATH
 from API.ts_dataset import TS
 
 from API.dataloader_gtrans import DataLoader_GTrans
+import inspect
 from API.featurizer import featurize_GTrans
+print(inspect.getsourcefile(featurize_GTrans))
+print(inspect.getsource(featurize_GTrans))
 from API.h5_dataset import H5Dataset
 from API.pdb_dataset import PDBDataset
 import itertools
@@ -42,6 +45,7 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
 
     collate_fn = featurize_GTrans
     print(type(collate_fn))
+
     train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
     valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
     test_loader = DataLoader_GTrans(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)

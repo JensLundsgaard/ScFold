@@ -32,8 +32,9 @@ def extract_backbone(pdb_text: str, pdb_id: str, chain:str) -> torch.Tensor:
 
     coords = []
     model = next(structure.get_models())
+    residues = []
     for chain in model:
-        if not chain.has_id(chain):
+        if chain chain):
             for residue in chain:
                 if not residue.has_id("CA"):
                     continue
@@ -46,7 +47,7 @@ def extract_backbone(pdb_text: str, pdb_id: str, chain:str) -> torch.Tensor:
     if not coords:
         raise ValueError(f"No complete backbone residues found in {pdb_id}")
 
-    return torch.tensor(coords, dtype=torch.float32)
+    return torch.tensor(coords, dtype=torch.float32), 
 
 
 
@@ -64,5 +65,4 @@ class PDBDataset(Dataset):
     def __getitem__(self, idx):
         pdb_id, tensor = self.pdbs[idx]
         
-
-        
+        return {'title':(pdb_id), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
