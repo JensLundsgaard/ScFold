@@ -18,7 +18,7 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
     L_max = max([len(b['seq']) for b in batch])
     X = np.zeros([B, L_max, 4, 3])
     S = np.zeros([B, L_max], dtype=np.int32)
-    score = np.zeros([B, L_max])
+    score = np.ones([B, L_max]) * 100.0
     titles = [b["title"] for b in batch]
 
     def shuffle_subset(n, p):
@@ -43,10 +43,8 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
         if shuffle_fraction > 0.:
             idx_shuffle = shuffle_subset(l, shuffle_fraction)
             S[i, :l] = indices[idx_shuffle]
-            score[i,:l] = b['score'][idx_shuffle]
         else:
             S[i, :l] = indices
-            score[i,:l] = b['score']
 
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
     numbers = np.sum(mask, axis=1).astype(np.int)

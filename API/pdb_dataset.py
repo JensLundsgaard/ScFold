@@ -106,4 +106,4 @@ class PDBDataset(data.Dataset):
     def __getitem__(self, idx):
         pdb_id, (bb_tensor, y) = self.pdbs[idx]
         
-        return {'title':(pdb_id), 'seq':y} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
+        return {'title':(pdb_id), 'seq':y, "scores":0} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
