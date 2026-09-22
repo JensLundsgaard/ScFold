@@ -99,7 +99,7 @@ class PDBDataset(data.Dataset):
         if frmat != "PPPP_C":
             self.pdbs = [pdb[:4] + "_" + pdb[4:5] for pdb in self.pdbs]
 
-        self.pdbs = [(pdb, extract_backbone(download_pdb(pdb[:4]), pdb)) for pdb in self.pdbs]
+        self.pdbs = [(pdb, extract_backbone(download_pdb(pdb[:4]), pdb)) for pdb in tqdm(self.pdbs)]
 
     def __len__(self):
         return len(self.pdbs)
