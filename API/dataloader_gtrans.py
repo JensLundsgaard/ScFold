@@ -47,7 +47,7 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
             S[i, :l] = indices
 
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
-    numbers = np.sum(mask, axis=1).astype(np.int)
+    numbers = np.sum(mask, axis=1).astype(np.int32)
     S_new = np.zeros_like(S)
     score_new = np.zeros_like(score)
     X_new = np.zeros_like(X)+np.nan
