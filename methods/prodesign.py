@@ -8,6 +8,7 @@ import os
 import pandas as pd
 
 from .base_method import Base_method
+import wandb
 from .utils import cuda
 from .prodesign_model import ProDesign_Model
 from torch_scatter import scatter_sum
