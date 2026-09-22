@@ -5,11 +5,8 @@ import pandas as pd
 from API.cath_dataset import CATH
 from API.ts_dataset import TS
 
-from API.dataloader_gtrans import DataLoader_GTrans
+from API.dataloader_gtrans import DataLoader_GTrans, featurize_GTrans
 import inspect
-from API.featurizer import featurize_GTrans
-print(inspect.getsourcefile(featurize_GTrans))
-print(inspect.getsource(featurize_GTrans))
 from API.h5_dataset import H5Dataset
 from API.pdb_dataset import PDBDataset
 import itertools
