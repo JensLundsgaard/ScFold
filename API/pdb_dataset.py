@@ -17,6 +17,8 @@ from Bio.PDB import PDBParser
 from Bio.PDB.PDBIO import PDBIO, Select
 from tqdm import tqdm
 import pandas as pd
+import io
+from time import sleep
 
 import urllib.request
 import urllib.error
