@@ -134,7 +134,7 @@ class ProDesign(Base_method):
                     prot_S = S[prot_mask] 
 
                     loss = self.criterion(prot_logits, prot_S)
-                    val_losses.append(loss.item())
+                    valid_losses.append(loss.item())
                     valid_acc_1s.append(top_k_acc(prot_logits, prot_S, 1)) 
                     valid_acc_5s.append(top_k_acc(prot_logits, prot_S, 5)) 
                     valid_acc_10s.append(top_k_acc(prot_logits, prot_S, 10)) 
