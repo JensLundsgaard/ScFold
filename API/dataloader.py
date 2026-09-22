@@ -1,6 +1,8 @@
 import copy
-import os.path as osp
+import osp as osp
 import pandas as pd
+import h5py
+import numpy as np
 
 from API.cath_dataset import CATH
 from API.ts_dataset import TS
@@ -42,8 +44,8 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         train_groups = split_df[(~val_mask) & (~test_mask)]["pdb"].to_list()
         test_groups = split_df[test_mask]["pdb"].to_list()
     else:
-        h5_path = os.path.join("..", f"mdcath_spinet_{temp}_0.h5")
-        index = pd.read_csv(os.path.join("..",f"mdcath_{temp}_0_topology_split.csv"))
+        h5_path = osp.join("..", f"mdcath_spinet_{temp}_0.h5")
+        index = pd.read_csv(osp.join("..",f"mdcath_{temp}_0_topology_split.csv"))
 
         train_groups = index[index["split"] == "train"]["domain"].tolist()
         test_groups = index[index["split"] == "test"]["domain"].tolist()
