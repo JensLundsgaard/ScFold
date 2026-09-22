@@ -95,7 +95,7 @@ class Exp:
         return self.method.valid_one_epoch(self.valid_loader, epoch=epoch)
 
     def test(self):
-        return self.method.valid_one_epoch(self.test_loader, epoch=-1)
+        return self.method.valid_one_epoch(self.test_loader, epoch=-1, val_name="test")
 
 
 if __name__ == '__main__':

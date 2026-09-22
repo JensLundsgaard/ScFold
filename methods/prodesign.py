@@ -53,7 +53,12 @@ def batched_bincount(x: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
     counts.scatter_add_(1, idx, torch.ones_like(idx, dtype=torch.long))
 
     return counts 
+def get_confusion_matrix(gt_indices, pred_indices, num_classes):
+    gt_one_hot = F.one_hot(gt_indices, num_classes=num_classes).float()
+    pred_one_hot = F.one_hot(pred_indices, num_classes=num_classes).float()
 
+    confusion_mat = torch.einsum("bi, bj->ij", gt_one_hot, pred_one_hot)
+    return confusion_mat
 
 class ProDesign(Base_method):
     def __init__(self, args, device, steps_per_epoch):
@@ -100,7 +105,7 @@ class ProDesign(Base_method):
         train_perplexity = np.exp(train_loss)
         return train_loss, train_perplexity
 
-    def valid_one_epoch(self, valid_loader, epoch=-1):
+    def valid_one_epoch(self, valid_loader, epoch=-1, val_name="val"):
         self.model.eval()
         valid_losses = []
         valid_pbar = tqdm(valid_loader)
@@ -169,7 +174,7 @@ class ProDesign(Base_method):
 
                 targets = S[0] # num_res
                 """
-                batch_conf_mat = get_confusion_matrix(targets_cpu, preds, num_classes)
+                batch_conf_mat = get_confusion_matrix(S.cpu(), logits.argmax(dim=-1).cpu(),len(DataLoader_GTrans.alphabet))
                 global_confusion_mat += batch_conf_mat
 
                 diag = batch_conf_mat.diag()
@@ -182,9 +187,37 @@ class ProDesign(Base_method):
                      precisions[amino_acid].append(precision[k].item())
                      recalls[amino_acid].append(recall[k].item())
                      f1s[amino_acid].append(f1[k].item())
-
+        prf_dict = {}
+        precisions = {key: torch.tensor(value) for key, value in precisions.items()}  # each value: (num_batches,), one entry per batch this amino acid appeared in
+        recalls = {key: torch.tensor(value) for key, value in recalls.items()}        # each value: (num_batches,)
+        f1s = {key: torch.tensor(value) for key, value in f1s.items()}               # each value: (num_batches,)
+        for k, amino_acid in enumerate(DataLoader_GTrans.alphabet):
+            prf_dict[f"{val_name}_{amino_acid}_f1_mean"] = f1s[amino_acid].mean().item()
+            prf_dict[f"{val_name}_{amino_acid}_precision_mean"] = precisions[amino_acid].mean().item()
+            prf_dict[f"{val_name}_{amino_acid}_recall_mean"] = recalls[amino_acid].mean().item()
+            prf_dict[f"{val_name}_{amino_acid}_f1_std"] = f1s[amino_acid].std().item()
+            prf_dict[f"{val_name}_{amino_acid}_precision_std"] = precisions[amino_acid].std().item()
+            prf_dict[f"{val_name}_{amino_acid}_recall_std"] = recalls[amino_acid].std().item() 
         seq_pred_df = pd.DataFrame({"seq":seqs, "idx":seq_idxs, "name":seq_names})
-        self.run.log({"seq_df":wandb.Table(dataframe=seq_pred_df)})
+
+        perplexities = torch.exp(torch.tensor(valid_losses))  
+
+        prf_dict[f"{val_name}_perp_mean"] = (pm := perplexities.mean().item())
+        prf_dict[f"{val_name}_perp_std"] = (ps := perplexities.std().item())
+
+        acc_top_1 = torch.tensor(valid_acc_1s)
+        acc_top_5 = torch.tensor(valid_acc_5s)
+        acc_top_10 = torch.tensor(valid_acc_10s)
+
+        prf_dict[f"{val_name}_top1_acc_mean"] = (a1m := acc_top_1.mean().item())
+        prf_dict[f"{val_name}_top5_acc_mean"] = (a5m := acc_top_5.mean().item())
+        prf_dict[f"{val_name}_top10_acc_mean"] = (a10m := acc_top_10.mean().item())
+        prf_dict[f"{val_name}_top1_acc_std"] = (a1s := acc_top_1.std().item())
+        prf_dict[f"{val_name}_top5_acc_std"] = (a5s := acc_top_5.std().item())
+        prf_dict[f"{val_name}_top10_acc_std"] = (a10s := acc_top_10.std().item())
+
+        print(f"${a1m:.3f} \\pm {a1s:.3f}$ & ${a5m:.3f} \\pm {a5s:.3f}$ & ${a10m:.3f} \\pm {a10s:.3f}$ & ${pm:.3f} \\pm {ps:.3f}$")
+        self.run.log(prf_dict | {"seq_df":wandb.Table(dataframe=seq_pred_df)})
         return np.array(valid_losses), np.array(valid_acc_1s), np.array(valid_acc_5s), np.array(valid_acc_10s)
 
     def test_one_epoch(self, test_loader):
