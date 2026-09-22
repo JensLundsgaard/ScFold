@@ -24,15 +24,17 @@ def pick_frame(num_frames, protein_id, seed, frame_index=None):
 
 # I am editing this to insert my own Dataset into the dataloader
 def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs):
-    # mdcath_spinet_320_0.h5 
-    # mdcath_spinet_450_0.h5 
-    # atlas_data.h5
-    h5_path = "atlas_data.h5"
-    use_pdbs = True
-    h5_path = osp.join("..",h5_path)
-    temp = 320
+    if not isinstance(kwargs, dict):
+        kwargs = vars(kwargs)
+
+    h5_path = kwargs.get("h5", "atlas_data.h5")
+    index_path = kwargs.get("index", "atlas_cross_val_index.csv")
+    use_pdbs = kwargs.get("use_pdbs", True)
+
     if(h5_path == "atlas_data.h5"):
-        split_df = pd.read_csv(osp.join("..", "atlas_cross_val_index.csv"))
+
+        h5_path = osp.join("..",h5_path)
+        split_df = pd.read_csv(osp.join("..", index_path))
         val_mask = split_df["cross_val"] == 0 # change to whatever cross val sets you want
         test_mask = split_df["cross_val"] == 4
 
@@ -43,9 +45,11 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         val_groups = split_df[val_mask]["pdb"].to_list()
         train_groups = split_df[(~val_mask) & (~test_mask)]["pdb"].to_list()
         test_groups = split_df[test_mask]["pdb"].to_list()
+
     else:
-        h5_path = osp.join("..", f"mdcath_spinet_{temp}_0.h5")
-        index = pd.read_csv(osp.join("..",f"mdcath_{temp}_0_topology_split.csv"))
+
+        h5_path = osp.join("..",h5_path)
+        index = pd.read_csv(osp.join("..", index_path))
 
         train_groups = index[index["split"] == "train"]["domain"].tolist()
         test_groups = index[index["split"] == "test"]["domain"].tolist()
@@ -71,7 +75,6 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         test_set = PDBDataset(test_groups)
 
     collate_fn = featurize_GTrans
-    print(type(collate_fn))
 
     train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
     valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
