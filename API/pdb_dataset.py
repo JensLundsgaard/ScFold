@@ -6,7 +6,6 @@ import os
 import json
 import traceback
 import numpy as np
-from tqdm import tqdm
 import torch.utils.data as data
 import h5py
 import torch
