@@ -91,7 +91,7 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
 
     return torch.tensor(coords, dtype=torch.float32), seq
 
-class PDBDataset(Dataset):
+class PDBDataset(data.Dataset):
     def __init__(self, pdbs, frmat="PPPP_C"):
         self.pdbs = pdbs
         if frmat != "PPPP_C":
