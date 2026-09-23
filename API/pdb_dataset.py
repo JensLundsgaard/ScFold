@@ -109,4 +109,4 @@ class PDBDataset(data.Dataset):
         if any(y_char not in alphabet for y_char in y):
             print(y, alphabet)
         
-        return {'title':(pdb_id), 'seq':y, "scores":0} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
+        return {'title':(pdb_id, -1), 'seq':y, "scores":0} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
