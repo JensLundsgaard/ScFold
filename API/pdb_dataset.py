@@ -104,7 +104,7 @@ class PDBDataset(data.Dataset):
             try:
                 result = extract_backbone(download_pdb(pdb[:4]), pdb)
                 self.pdbs.append((pdb, result))
-            except (ValueError, PDBConstructionException) as e:
+            except (ValueError) as e:
                 print(f"Skipping {pdb}: {e}")
 
     def __len__(self):
