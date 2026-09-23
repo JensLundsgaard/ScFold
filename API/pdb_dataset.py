@@ -25,6 +25,7 @@ import re
 
 BACKBONE_ATOMS = ["CA", "N", "C", "O"]
 RCSB_URL = "https://files.rcsb.org/download/{pdb_id}.cif"
+alphabet = 'ACDEFGHIKLMNPQRSTVWY'
 
 def download_pdb(pdb_id: str, timeout: int = 10) -> str:
     max_tries = 3
@@ -83,7 +84,7 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
 
         if not all(atom_name in residue for atom_name in BACKBONE_ATOMS):
             continue
-        seq += seq1(residue.get_resname())
+        seq += seq1(residue.get_resname()).upper()
         atom_coords = [residue[atom_name].coord for atom_name in BACKBONE_ATOMS]
         coords.append(atom_coords)
 
@@ -105,5 +106,7 @@ class PDBDataset(data.Dataset):
 
     def __getitem__(self, idx):
         pdb_id, (bb_tensor, y) = self.pdbs[idx]
+        if any(y_char not in alphabet for y_char in y):
+            print(y, alphabet)
         
         return {'title':(pdb_id), 'seq':y, "scores":0} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
