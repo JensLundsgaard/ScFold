@@ -30,41 +30,28 @@ RCSB_URL = "https://files.rcsb.org/download/{pdb_id}.cif"
 alphabet = 'ACDEFGHIKLMNPQRSTVWY'
 CACHE_DIR = "cif_cache"
 RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
-def download_pdb(pdb_id: str, timeout: int = 10) -> str:
-    max_tries = 3
-    backoff = 1
-    for _ in range(max_tries):
-        try:
-            if not isinstance(pdb_id, str) or not re.fullmatch(r"[0-9A-Za-z]{4}", pdb_id):
-                raise ValueError(f"Invalid PDB ID '{pdb_id}'. Must be 4 alphanumeric characters.")
 
-            url = RCSB_URL.format(pdb_id=pdb_id.upper())
+import torch
+import torch.utils.data as data
+from Bio.PDB.MMCIFParser import MMCIFParser
+from Bio.SeqUtils import seq1
 
-            try:
-                with urllib.request.urlopen(url, timeout=timeout) as response:
-                    if response.status != 200:
-                        raise urllib.error.HTTPError(url, response.status, "HTTP error", response.headers, None)
-                    data = response.read()
-            except urllib.error.HTTPError as e:
-                raise urllib.error.HTTPError(e.url, e.code, f"Failed to download PDB file: {e.reason}", e.headers, e.fp)
-            except urllib.error.URLError as e:
-                raise urllib.error.URLError(f"Network error while downloading PDB file: {e.reason}")
 
-            try:
-                text = data.decode("utf-8")
-            except UnicodeDecodeError:
-                raise ValueError("Downloaded file is not valid UTF-8 text.")
+def cache_path(pdb_id: str, cache_dir=os.path.join("..","pdbs")) -> str:
+    return os.path.join(cache_dir, f"{pdb_id.upper()}.cif")
 
-            if not text.strip():
-                raise ValueError(f"PDB file for ID '{pdb_id}' is empty.")
+def read_cached_cif(pdb_id: str, cache_dir=os.path.join("..","pdbs")) -> str:
+    path = cache_path(pdb_id, cache_dir)
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"No cached .cif for '{pdb_id}' at {path}. "
+            f"Run download_cifs.py first to populate the cache."
+        )
+    with open(path, "r") as f:
+        return f.read()
 
-            return text
-        except ValueError:
-            sleep(backoff)
-            backoff *= 2
-    raise ValueError("reached max backoff")
 
-def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
+def extract_backbone(pdb_text: str, pdb_chain_id: str):
     try:
         pdb_id, chain_id = pdb_chain_id.split("_", 1)
     except ValueError:
@@ -87,62 +74,47 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
 
         if not all(atom_name in residue for atom_name in BACKBONE_ATOMS):
             continue
-        seq += seq1(RESIDUE_ALIASES.get(residue.get_resname(), residue.get_resname())).upper()
+        seq += seq1(residue.get_resname()).upper()
         atom_coords = [residue[atom_name].coord for atom_name in BACKBONE_ATOMS]
         coords.append(atom_coords)
 
-    if any(seq_char not in alphabet for seq_char in seq):
-        return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
     if not coords:
         return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
 
     return torch.tensor(coords, dtype=torch.float32), seq
 
-def download_pdb_cached(pdb_id: str, timeout: int = 10) -> str:
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    path = os.path.join(CACHE_DIR, f"{pdb_id.upper()}.cif")
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return f.read()
-    text = download_pdb(pdb_id, timeout=timeout)
-    with open(path, "w") as f:
-        f.write(text)
-    return text
-
 
 class PDBDataset(data.Dataset):
-    def __init__(self, pdbs, frmat="PPPP_C", max_workers=16):
+    def __init__(self, pdbs, frmat="PPPP_C", cache_dir=os.path.join("..","pdbs")):
         self._pdbs = pdbs
         if frmat != "PPPP_C":
             self._pdbs = [pdb[:4] + "_" + pdb[4:5] for pdb in self._pdbs]
 
-        unique_ids = sorted(set(pdb[:4] for pdb in self._pdbs))
-
+        unique_ids = sorted({pdb[:4] for pdb in self._pdbs})
         cif_text = {}
-        with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            futures = {ex.submit(download_pdb_cached, pid): pid for pid in unique_ids}
-            for fut in tqdm(as_completed(futures), total=len(futures), desc="downloading"):
-                pid = futures[fut]
-                try:
-                    cif_text[pid] = fut.result()
-                except Exception as e:
-                    print(f"Failed to download {pid}: {e}")
+        for pid in tqdm(unique_ids, desc="reading cache"):
+            try:
+                cif_text[pid] = read_cached_cif(pid, cache_dir)
+            except FileNotFoundError as e:
+                print(e)
 
         self.pdbs = []
         for pdb in tqdm(self._pdbs, desc="parsing"):
             pid = pdb[:4]
             if pid not in cif_text:
-                continue  # download failed, already logged
+                continue  # missing from cache, already logged
             try:
                 result = extract_backbone(cif_text[pid], pdb)
                 self.pdbs.append((pdb, result))
             except ValueError as e:
                 print(f"Skipping {pdb}: {e}")
+
     def __len__(self):
         return len(self.pdbs)
 
     def __getitem__(self, idx):
         pdb_id, (bb_tensor, y) = self.pdbs[idx]
-        print(y, alphabet)
-        
-        return {'title':(pdb_id, -1), 'seq':y} | {atom: bb_tensor[:,i] for i, atom in enumerate(BACKBONE_ATOMS)}
+
+        return {"title": (pdb_id, -1), "seq": y} | {
+            atom: bb_tensor[:, i] for i, atom in enumerate(BACKBONE_ATOMS)
+        }
