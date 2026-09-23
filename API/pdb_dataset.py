@@ -76,7 +76,7 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
     model = next(structure.get_models())
 
     if chain_id not in model:
-        return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32)
+        return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
 
     chain = model[chain_id]
     seq = ""
