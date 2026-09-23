@@ -26,9 +26,8 @@ def pick_frame(num_frames, protein_id, seed, frame_index=None):
 def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs):
     if not isinstance(kwargs, dict):
         kwargs = vars(kwargs)
-    print(kwargs.keys())
-    h5_path = kwargs.get("h5", "atlas_data.h5")
-    index_path = kwargs.get("index", "atlas_cross_val_index.csv")
+    h5_path = kwargs.get("h5_name", "atlas_data.h5")
+    index_path = kwargs.get("index_name", "atlas_cross_val_index.csv")
     use_pdbs = kwargs.get("use_pdbs", True)
 
     if(h5_path == "atlas_data.h5"):
