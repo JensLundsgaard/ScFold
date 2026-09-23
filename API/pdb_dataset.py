@@ -29,6 +29,7 @@ BACKBONE_ATOMS = ["CA", "N", "C", "O"]
 RCSB_URL = "https://files.rcsb.org/download/{pdb_id}.cif"
 alphabet = 'ACDEFGHIKLMNPQRSTVWY'
 CACHE_DIR = "cif_cache"
+RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
 def download_pdb(pdb_id: str, timeout: int = 10) -> str:
     max_tries = 3
     backoff = 1
@@ -86,10 +87,12 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
 
         if not all(atom_name in residue for atom_name in BACKBONE_ATOMS):
             continue
-        seq += seq1(residue.get_resname()).upper()
+        seq += seq1(RESIDUE_ALIASES.get(residue.get_resname(), residue.get_resname())).upper()
         atom_coords = [residue[atom_name].coord for atom_name in BACKBONE_ATOMS]
         coords.append(atom_coords)
 
+    if any(seq_char not in alphabet for seq_char in seq):
+        return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
     if not coords:
         return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
 
