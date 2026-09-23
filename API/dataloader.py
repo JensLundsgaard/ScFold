@@ -26,58 +26,55 @@ def pick_frame(num_frames, protein_id, seed, frame_index=None):
 def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs):
     if not isinstance(kwargs, dict):
         kwargs = vars(kwargs)
-    h5_path = kwargs["h5_name"]
-    og_file = h5_path
+    #h5_path = kwargs["h5_name"]
     index_path = kwargs["index_name"]
     use_pdbs = kwargs["use_pdbs"]
     print("test")
 
-    if(h5_path == "atlas_data.h5"):
+    if(index_path == "atlas_cross_val_index.csv"):
 
-        h5_path = osp.join("..",h5_path)
+        #h5_path = osp.join("..",h5_path)
         split_df = pd.read_csv(osp.join("..", index_path))
         val_mask = split_df["cross_val"] == 0 # change to whatever cross val sets you want
         test_mask = split_df["cross_val"] == 4
 
-        train_indices = split_df[(~val_mask) & (~test_mask)]["random_indices"].to_list()
-        val_indices = split_df[val_mask]["random_indices"].to_list()
-        test_indices = split_df[test_mask]["random_indices"].to_list()
+        #train_indices = split_df[(~val_mask) & (~test_mask)]["random_indices"].to_list()
+        #val_indices = split_df[val_mask]["random_indices"].to_list()
+        #test_indices = split_df[test_mask]["random_indices"].to_list()
         
         val_groups = split_df[val_mask]["pdb"].to_list()
         train_groups = split_df[(~val_mask) & (~test_mask)]["pdb"].to_list()
         test_groups = split_df[test_mask]["pdb"].to_list()
-        print("test atlas")
 
 
     else:
 
-        h5_path = osp.join("..",h5_path)
+        #h5_path = osp.join("..",h5_path)
         index = pd.read_csv(osp.join("..", index_path))
 
         train_groups = index[index["split"] == "train"]["domain"].tolist()
         test_groups = index[index["split"] == "test"]["domain"].tolist()
         val_groups = index[index["split"] == "validation"]["domain"].tolist()        
-        pdb_to_size = {}
-        def visit(name, obj):
-            if isinstance(obj, h5py.Group) and "coordinates" in obj:
-                pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
-        with h5py.File(h5_path, "r") as f:
-            f.visititems(visit)
+        #pdb_to_size = {}
+        #def visit(name, obj):
+        #    if isinstance(obj, h5py.Group) and "coordinates" in obj:
+        #        pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
+        #with h5py.File(h5_path, "r") as f:
+        #    f.visititems(visit)
 
-        train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
-        val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
-        test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
+        #train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
+        #val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
+        #test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
 
-        print("test cath")
 
-    if not use_pdbs:
-        train_set = H5Dataset(h5_path, random_indices=train_indices, groups=train_groups)
-        valid_set = H5Dataset(h5_path, random_indices=val_indices, groups=val_groups)
-        test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
-    else:
-        train_set = PDBDataset(train_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
-        valid_set = PDBDataset(val_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
-        test_set = PDBDataset(test_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
+        #train_set = H5Dataset(h5_path, random_indices=train_indices, groups=train_groups)
+        #valid_set = H5Dataset(h5_path, random_indices=val_indices, groups=val_groups)
+        #test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
+    #else:
+
+    train_set = PDBDataset(train_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
+    valid_set = PDBDataset(val_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
+    test_set = PDBDataset(test_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
 
     collate_fn = featurize_GTrans
 
