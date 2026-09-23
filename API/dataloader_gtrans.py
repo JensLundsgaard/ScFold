@@ -39,6 +39,7 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
         X[i,:,:,:] = x_pad
 
         # Convert to labels
+        print(b["seq"], alphabet)
         indices = np.asarray([alphabet.index(a) for a in b['seq']], dtype=np.int32)
         if shuffle_fraction > 0.:
             idx_shuffle = shuffle_subset(l, shuffle_fraction)
