@@ -12,7 +12,6 @@ class DataLoader_GTrans(torch.utils.data.DataLoader):
 
 def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, np.ndarray, list[str]]:
     """ Pack and pad batch into torch tensors """
-    print("running pack")
     alphabet = DataLoader_GTrans.alphabet
     B = len(batch)
     lengths = np.array([len(b['seq']) for b in batch], dtype=np.int32)
@@ -22,7 +21,6 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
     score = np.ones([B, L_max]) * 100.0
     titles = [b["title"] for b in batch]
 
-    print([b["seq"] for b in batch], alphabet)
 
     def shuffle_subset(n, p):
         n_shuffle = np.random.binomial(n, p)
@@ -33,7 +31,6 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
         ix[ix_subset] = ix_subset_shuffled
         return ix
 
-    print([b["seq"] for b in batch], alphabet)
     # Build the batch
     for i, b in enumerate(batch):
         x = np.stack([b[c] for c in ['N', 'CA', 'C', 'O']], 1) # [#atom, 4, 3]
@@ -50,7 +47,6 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
         else:
             S[i, :l] = indices
 
-    print([b["seq"] for b in batch], alphabet)
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
     numbers = np.sum(mask, axis=1).astype(np.int32)
     S_new = np.zeros_like(S)
@@ -73,5 +69,4 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
     X = torch.from_numpy(X).to(dtype=torch.float32)
     mask = torch.from_numpy(mask).to(dtype=torch.float32)
 
-    print([b["seq"] for b in batch], alphabet)
     return X, S, score, mask, lengths, titles
