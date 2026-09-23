@@ -95,11 +95,17 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str) -> torch.Tensor:
 
 class PDBDataset(data.Dataset):
     def __init__(self, pdbs, frmat="PPPP_C"):
-        self.pdbs = pdbs
+        self._pdbs = pdbs
         if frmat != "PPPP_C":
-            self.pdbs = [pdb[:4] + "_" + pdb[4:5] for pdb in self.pdbs]
+            self._pdbs = [pdb[:4] + "_" + pdb[4:5] for pdb in self._pdbs]
 
-        self.pdbs = [(pdb, extract_backbone(download_pdb(pdb[:4]), pdb)) for pdb in tqdm(self.pdbs)]
+        self.pdbs = []
+        for pdb in tqdm(self._pdbs):  # whatever your original list was called
+            try:
+                result = extract_backbone(download_pdb(pdb[:4]), pdb)
+                self.pdbs.append((pdb, result))
+            except (ValueError, PDBConstructionException) as e:
+                print(f"Skipping {pdb}: {e}")
 
     def __len__(self):
         return len(self.pdbs)
