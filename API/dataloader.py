@@ -70,9 +70,9 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         valid_set = H5Dataset(h5_path, random_indices=val_indices, groups=val_groups)
         test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
     else:
-        train_set = PDBDataset(train_groups, formt=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
-        valid_set = PDBDataset(val_groups, formt=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
-        test_set = PDBDataset(test_groups, formt=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
+        train_set = PDBDataset(train_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
+        valid_set = PDBDataset(val_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
+        test_set = PDBDataset(test_groups, frmat=("PPPP_C" if og_file == 'atlas_dataset.h5' else ""))
 
     collate_fn = featurize_GTrans
 
