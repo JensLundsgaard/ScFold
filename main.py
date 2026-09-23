@@ -91,7 +91,7 @@ class Exp:
         #best_model_path = osp.join(self.path, 'checkpoint.pth')
         #self.method.model.load_state_dict(torch.load(best_model_path))
         with torch.no_grad():
-            test_losses, test_acc_1s, test_acc_5s, test_acc_10s = self.test(epoch)
+            test_losses, test_acc_1s, test_acc_5s, test_acc_10s = self.test()
 
                 
             print(f" {sum(params.numel() for params in self.method.model.parameters() if params.requires_grad)} & ${test_acc_1s.mean():.3f} \\pm {test_acc_1s.std():.3f}$ & ${test_acc_5s.mean():.3f} \\pm {test_acc_5s.std():.3f}$ & ${test_acc_10s.mean():.3f} \\pm {test_acc_10s.std():.3f}$ & ${np.exp(test_losses).mean():.3f} \\pm {np.exp(test_losses).std():.3f}$ ")
