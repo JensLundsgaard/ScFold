@@ -21,6 +21,8 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
     score = np.ones([B, L_max]) * 100.0
     titles = [b["title"] for b in batch]
 
+    print([b["seq"] for b in batch], alphabet)
+
     def shuffle_subset(n, p):
         n_shuffle = np.random.binomial(n, p)
         ix = np.arange(n)
@@ -39,7 +41,6 @@ def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Te
         X[i,:,:,:] = x_pad
 
         # Convert to labels
-        print(b["seq"], alphabet)
         indices = np.asarray([alphabet.index(a) for a in b['seq']], dtype=np.int32)
         if shuffle_fraction > 0.:
             idx_shuffle = shuffle_subset(l, shuffle_fraction)
