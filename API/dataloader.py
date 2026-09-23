@@ -30,6 +30,7 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     og_file = h5_path
     index_path = kwargs["index_name"]
     use_pdbs = kwargs["use_pdbs"]
+    print("test")
 
     if(h5_path == "atlas_data.h5"):
 
@@ -45,6 +46,8 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         val_groups = split_df[val_mask]["pdb"].to_list()
         train_groups = split_df[(~val_mask) & (~test_mask)]["pdb"].to_list()
         test_groups = split_df[test_mask]["pdb"].to_list()
+        print("test atlas")
+
 
     else:
 
@@ -64,6 +67,8 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
         val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
         test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
+
+        print("test cath")
 
     if not use_pdbs:
         train_set = H5Dataset(h5_path, random_indices=train_indices, groups=train_groups)
