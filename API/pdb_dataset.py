@@ -37,11 +37,11 @@ from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio.SeqUtils import seq1
 
 
-def cache_path(pdb_id: str, cache_dir=os.path.join("..","pdbs")) -> str:
-    return os.path.join(cache_dir, f"{pdb_id.upper()}.cif")
+def cache_path(pdb_id: str, cache_dir=os.path.join("..","pdbs"), use_cath=False) -> str:
+    return os.path.join(cache_dir, f"{pdb_id.upper()}" + ("" if use_cath else ".cif"))
 
-def read_cached_cif(pdb_id: str, cache_dir=os.path.join("..","pdbs")) -> str:
-    path = cache_path(pdb_id, cache_dir)
+def read_cached_cif(pdb_id: str, cache_dir=os.path.join("..","pdbs"), use_cath) -> str:
+    path = cache_path(pdb_id, cache_dir, use_cath=use_cath)
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"No cached .cif for '{pdb_id}' at {path}. "
@@ -51,14 +51,14 @@ def read_cached_cif(pdb_id: str, cache_dir=os.path.join("..","pdbs")) -> str:
         return f.read()
 
 
-def extract_backbone(pdb_text: str, pdb_chain_id: str):
-    try:
-        pdb_id, chain_id = pdb_chain_id.split("_", 1)
-    except ValueError:
-        raise ValueError(f"Invalid format '{pdb_chain_id}'. Expected 'PPPP_C'.")
+def extract_backbone(pdb_text: str, pdb_chain_id: str, use_cath=False):
+    if(not use_cath):
+        pdb_chain_id, chain_id = pdb_chain_id.split("_", 1)
+    else:
+        chain_id = pdb_chain_id[4:5]
 
-    parser = MMCIFParser(QUIET=True)
-    structure = parser.get_structure(pdb_id, io.StringIO(pdb_text))
+    parser = MMCIFParser(QUIET=True) if not use_cath else PDBParser(QUIET=True)
+    structure = parser.get_structure(pdb_chain_id, io.StringIO(pdb_text))
 
     coords = []
     model = next(structure.get_models())
@@ -82,30 +82,31 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str):
         return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
     if any(seq_char not in alphabet for seq_char in seq):
         return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
+
     return torch.tensor(coords, dtype=torch.float32), seq
 
 
 class PDBDataset(data.Dataset):
-    def __init__(self, pdbs, frmat="PPPP_C", cache_dir=os.path.join("..","pdbs")):
-        self._pdbs = pdbs
-        if frmat != "PPPP_C":
-            self._pdbs = [pdb[:4] + "_" + pdb[4:5] for pdb in self._pdbs]
+    def __init__(self, pdbs, use_cath=True):
 
-        unique_ids = sorted({pdb[:4] for pdb in self._pdbs})
+        cache_dir=os.path.join("..","pdbs") if not use_cath else os.path.join("..", "dompdb")
+        self._pdbs = pdbs
+
+        unique_ids = sorted({(pdb[:4] if not use_cath else pdb) for pdb in self._pdbs})
         cif_text = {}
         for pid in tqdm(unique_ids, desc="reading cache"):
             try:
-                cif_text[pid] = read_cached_cif(pid, cache_dir)
+                cif_text[pid] = read_cached_cif(pid, cache_dir, use_cath=use_cath)
             except FileNotFoundError as e:
                 print(e)
 
         self.pdbs = []
         for pdb in tqdm(self._pdbs, desc="parsing"):
-            pid = pdb[:4]
+            pid = pdb[:4] if not use_cath else pdb
             if pid not in cif_text:
                 continue  # missing from cache, already logged
             try:
-                result = extract_backbone(cif_text[pid], pdb)
+                result = extract_backbone(cif_text[pid], pdb, use_cath=use_cath)
                 self.pdbs.append((pdb, result))
             except ValueError as e:
                 print(f"Skipping {pdb}: {e}")

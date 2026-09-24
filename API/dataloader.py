@@ -71,14 +71,10 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         #valid_set = H5Dataset(h5_path, random_indices=val_indices, groups=val_groups)
         #test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
     #else:
-    if test_val:
-        train_groups = train_groups[:10]
-        val_groups = val_groups[:10]
-        test_groups = test_groups[:10]
 
-    train_set = PDBDataset(train_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
-    valid_set = PDBDataset(val_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
-    test_set = PDBDataset(test_groups, frmat=("PPPP_C" if index_path == 'atlas_cross_val_index.csv' else ""))
+    train_set = PDBDataset(train_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
+    valid_set = PDBDataset(val_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
+    test_set = PDBDataset(test_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
 
     collate_fn = featurize_GTrans
 
