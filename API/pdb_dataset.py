@@ -38,7 +38,7 @@ from Bio.SeqUtils import seq1
 
 
 def cache_path(pdb_id: str, cache_dir=os.path.join("..","pdbs"), use_cath=False) -> str:
-    return os.path.join(cache_dir, f"{pdb_id.upper() if not use_cath else pdb_id.lower()}" + ("" if use_cath else ".cif"))
+    return os.path.join(cache_dir, f"{pdb_id.upper() if not use_cath else pdb_id}" + ("" if use_cath else ".cif"))
 
 def read_cached_cif(pdb_id: str, cache_dir=os.path.join("..","pdbs"), use_cath=False) -> str:
     path = cache_path(pdb_id, cache_dir, use_cath=use_cath)
