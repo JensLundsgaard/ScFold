@@ -79,9 +79,9 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     print(len(valid_set))
     print(len(test_set))
 
-    print(len(train_group))
-    print(len(valid_group))
-    print(len(test_group))
+    print(len(train_groups))
+    print(len(valid_groups))
+    print(len(test_groups))
 
 
     collate_fn = featurize_GTrans
