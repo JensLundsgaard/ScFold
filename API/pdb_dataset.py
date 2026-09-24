@@ -80,7 +80,8 @@ def extract_backbone(pdb_text: str, pdb_chain_id: str):
 
     if not coords:
         return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
-
+    if any(seq_char not in alphabet for seq_char in seq):
+        return torch.empty((0, len(BACKBONE_ATOMS), 3), dtype=torch.float32), ""
     return torch.tensor(coords, dtype=torch.float32), seq
 
 
