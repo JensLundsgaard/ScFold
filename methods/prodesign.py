@@ -84,7 +84,6 @@ class ProDesign(Base_method):
         train_pbar = tqdm(train_loader)
         for step_idx, batch in enumerate(train_pbar):
             self.optimizer.zero_grad()  # 模型中所有可学习参数的梯度归零
-            print(len(batch))
             X, S, score, mask, lengths = cuda(batch[:-1], device=self.device)
             X, S, score, h_V, h_E, E_idx, batch_id, mask_bw, mask_fw, decoding_order = self.model._get_features(S,
                                                                                                                 score,
