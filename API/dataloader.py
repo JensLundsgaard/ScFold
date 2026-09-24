@@ -80,7 +80,7 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     print(len(test_set))
 
     print(len(train_groups))
-    print(len(valid_groups))
+    print(len(val_groups))
     print(len(test_groups))
 
 
