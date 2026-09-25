@@ -87,8 +87,9 @@ class Exp:
                     logging.info("Early stopping")
                     break
             
-        best_model_path = osp.join(self.path, 'checkpoint.pth')
-        self.method.model.load_state_dict(torch.load(best_model_path))
+        #best_model_path = osp.join(self.path, 'checkpoint.pth')
+        #self.method.model.load_state_dict(torch.load(best_model_path))
+        torch.save(self.method.model.state_dict(), osp.join("..","scfold.pth"))
         
     def valid(self):
         valid_loss, valid_perplexity = self.method.valid_one_epoch(self.valid_loader)
