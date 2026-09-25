@@ -282,7 +282,7 @@ def reference_seqs_from_h5(h5_path, protein_ids=None):
         if (wanted is not None and protein_id not in wanted) or protein_id in sequences:
             return
         sequences[protein_id] = "".join(
-            seq1(raw.decode().strip()[:3]) or "X" for raw in obj["residues"][:])
+            three_to_one(raw.decode().strip()[:3]) or "X" for raw in obj["residues"][:])
 
     with h5py.File(h5_path, "r") as h5_file:
         h5_file.visititems(visit)
