@@ -72,9 +72,9 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         #test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
     #else:
 
-    train_set = PDBDataset(train_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
-    valid_set = PDBDataset(val_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
-    test_set = PDBDataset(test_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
+    train_set = PDBDataset(train_groups, h5_path, num_workers=16, verbose=True)
+    valid_set = PDBDataset(val_groups, h5_path, num_workers=16, verbose=True)
+    test_set = PDBDataset(test_groups, h5_path, num_workers=16, verbose=True)
 
     print(len(train_set))
     print(len(valid_set))

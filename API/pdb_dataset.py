@@ -346,8 +346,7 @@ def load_relaxed_structures(protein_ids, cache_dir="./pdb_cache", reference_seqs
 
 
 class PDBDataset(data.Dataset):
-    def __init__(self, pdbs, h5_path, cache_dir=os.path.join("..", "cif_cache"),
-                 min_coverage=0.5, num_workers=8, verbose=True):
+    def __init__(self, pdbs, h5_path, cache_dir=os.path.join("..", "cif_cache"), min_coverage=0.5, num_workers=8, verbose=True):
         self._pdbs = list(dict.fromkeys(pdbs))
 
         reference_seqs = reference_seqs_from_h5(h5_path, protein_ids=self._pdbs)
@@ -366,11 +365,23 @@ class PDBDataset(data.Dataset):
             verbose=verbose,
         )
 
-        self.pdbs = [(pid, records[pid]) for pid in wanted if pid in records]
+        self.pdbs = []
+        length_mismatches = []
+        for pid in wanted:
+            if pid not in records:
+                continue  # already in `failures`, logged by load_relaxed_structures
+            record = records[pid]
+            ref_len = len(reference_seqs[pid])
+            if len(record["seq"]) != ref_len:
+                length_mismatches.append((pid, len(record["seq"]), ref_len))
+                continue
+            self.pdbs.append((pid, record))
 
         if verbose:
             for pid, reason in failures.items():
                 print("Skipping {}: {}".format(pid, reason))
+            for pid, got, want in length_mismatches:
+                print("Skipping {}: aligned crop has {} residues, H5 reference has {} ".format(pid, got, want))
             print("PDBDataset: {}/{} domains usable".format(len(self.pdbs), len(self._pdbs)))
 
     def __len__(self):
@@ -385,4 +396,3 @@ class PDBDataset(data.Dataset):
             atom: coords[:, i] for i, atom in enumerate(BACKBONE_ATOMS)
         }
 
-    
