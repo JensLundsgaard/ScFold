@@ -33,7 +33,6 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
 
     h5_path = osp.join("..",h5_path)
 
-    h5_path = osp.join("..",h5_path)
     if(index_path == "atlas_cross_val_index.csv"):
 
         split_df = pd.read_csv(osp.join("..", index_path))

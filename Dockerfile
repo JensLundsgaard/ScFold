@@ -14,5 +14,5 @@ RUN pip3 install --no-cache-dir torch-geometric
 
 RUN pip3 install --no-cache-dir scipy biopython scikit-learn tqdm easydict pyyaml pandas numpy h5py matplotlib wandb requests
 
-
+RUN apt-get update && apt-get install -y vim
 
