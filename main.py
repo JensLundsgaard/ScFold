@@ -117,8 +117,8 @@ if __name__ == '__main__':
     print(config)
     exp = Exp(args)
     
-    svpath = '/paper/demo/Zndesign-main/results/debug/'
-    exp.method.model.load_state_dict(torch.load(svpath+'zzw_38.pth'))
+    #svpath = '/paper/demo/Zndesign-main/results/debug/'
+    #exp.method.model.load_state_dict(torch.load(svpath+'zzw_38.pth'))
 
     #print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     #exp.train()
