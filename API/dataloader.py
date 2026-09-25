@@ -26,14 +26,16 @@ def pick_frame(num_frames, protein_id, seed, frame_index=None):
 def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs):
     if not isinstance(kwargs, dict):
         kwargs = vars(kwargs)
-    #h5_path = kwargs["h5_name"]
+    h5_path = kwargs["h5_name"]
     index_path = kwargs["index_name"]
     use_pdbs = kwargs["use_pdbs"]
     test_val = kwargs["test_val"]
 
+    h5_path = osp.join("..",h5_path)
+
+    h5_path = osp.join("..",h5_path)
     if(index_path == "atlas_cross_val_index.csv"):
 
-        #h5_path = osp.join("..",h5_path)
         split_df = pd.read_csv(osp.join("..", index_path))
         val_mask = split_df["cross_val"] == 0 # change to whatever cross val sets you want
         test_mask = split_df["cross_val"] == 4
@@ -49,7 +51,6 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
 
     else:
 
-        #h5_path = osp.join("..",h5_path)
         index = pd.read_csv(osp.join("..", index_path))
 
         train_groups = index[index["split"] == "train"]["domain"].tolist()
@@ -72,9 +73,10 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         #test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
     #else:
 
-    train_set = PDBDataset(train_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
-    valid_set = PDBDataset(val_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
-    test_set = PDBDataset(test_groups, use_cath=(index_path != 'atlas_cross_val_index.csv'))
+    train_set = PDBDataset(train_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
+    valid_set = PDBDataset(val_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
+    test_set = PDBDataset(test_groups, h5_path, num_workers=16, exact_length_only=True, verbose=True)
+
     print(len(train_set))
     print(len(valid_set))
     print(len(test_set))
