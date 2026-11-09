@@ -25,7 +25,7 @@ class H5Dataset(data.Dataset):
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
-        self.step = 16
+        self.step = 64
 
         with h5py.File(self.h5_path) as f:
             self.build_groups(f)
