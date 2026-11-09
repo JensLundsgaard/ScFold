@@ -106,6 +106,8 @@ class Exp:
 
 if __name__ == '__main__':
     from parserdemo import create_parser
+    import inspect
+    print(inspect.getsource(create_parser))
     args = create_parser()
     config = args.__dict__
     path = '/paper/demo/Zndesign-main/results/debug/zzw_38.pth'
