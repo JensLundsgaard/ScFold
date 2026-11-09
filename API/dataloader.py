@@ -55,26 +55,27 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         train_groups = index[index["split"] == "train"]["domain"].tolist()
         test_groups = index[index["split"] == "test"]["domain"].tolist()
         val_groups = index[index["split"] == "validation"]["domain"].tolist()        
-        #pdb_to_size = {}
-        #def visit(name, obj):
-        #    if isinstance(obj, h5py.Group) and "coordinates" in obj:
-        #        pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
-        #with h5py.File(h5_path, "r") as f:
-        #    f.visititems(visit)
+    pdb_to_size = {}
+    def visit(name, obj):
+        if isinstance(obj, h5py.Group) and "coordinates" in obj:
+            pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
+    with h5py.File(h5_path, "r") as f:
+        f.visititems(visit)
 
-        #train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
-        #val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
-        #test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
+    train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
+    val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
+    test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
 
 
-        #train_set = H5Dataset(h5_path, random_indices=train_indices, groups=train_groups)
-        #valid_set = H5Dataset(h5_path, random_indices=val_indices, groups=val_groups)
-        #test_set = H5Dataset(h5_path, random_indices=test_indices, groups=test_groups)
-    #else:
-
+    train_set = H5Dataset(h5_path, groups=train_groups)
+    valid_set = H5Dataset(h5_path, groups=val_groups)
+    test_set = H5Dataset(h5_path, groups=test_groups)
+    
+    """
     train_set = PDBDataset(train_groups, h5_path, num_workers=16, verbose=True)
     valid_set = PDBDataset(val_groups, h5_path, num_workers=16, verbose=True)
     test_set = PDBDataset(test_groups, h5_path, num_workers=16, verbose=True)
+    """
 
     print(len(train_set))
     print(len(valid_set))
