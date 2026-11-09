@@ -3,20 +3,24 @@ import numpy as np
 
 
 class DataLoader_GTrans(torch.utils.data.DataLoader):
+
+    alphabet = 'ACDEFGHIKLMNPQRSTVWY'
     def __init__(self, dataset, batch_size=1, shuffle=False, sampler=None, batch_sampler=None, num_workers=0,
                  collate_fn=None, **kwargs):
         super(DataLoader_GTrans, self).__init__(dataset, batch_size, shuffle, sampler, batch_sampler, num_workers, collate_fn,**kwargs)
         self.featurizer = collate_fn
 
-def featurize_GTrans(batch, shuffle_fraction=0.):
+def featurize_GTrans(batch, shuffle_fraction=0.) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, np.ndarray, list[str]]:
     """ Pack and pad batch into torch tensors """
-    alphabet = 'ACDEFGHIKLMNPQRSTVWY'
+    alphabet = DataLoader_GTrans.alphabet
     B = len(batch)
     lengths = np.array([len(b['seq']) for b in batch], dtype=np.int32)
     L_max = max([len(b['seq']) for b in batch])
     X = np.zeros([B, L_max, 4, 3])
     S = np.zeros([B, L_max], dtype=np.int32)
-    score = np.zeros([B, L_max])
+    score = np.ones([B, L_max]) * 100.0
+    titles = [b["title"] for b in batch]
+
 
     def shuffle_subset(n, p):
         n_shuffle = np.random.binomial(n, p)
@@ -40,13 +44,11 @@ def featurize_GTrans(batch, shuffle_fraction=0.):
         if shuffle_fraction > 0.:
             idx_shuffle = shuffle_subset(l, shuffle_fraction)
             S[i, :l] = indices[idx_shuffle]
-            score[i,:l] = b['score'][idx_shuffle]
         else:
             S[i, :l] = indices
-            score[i,:l] = b['score']
 
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
-    numbers = np.sum(mask, axis=1).astype(np.int)
+    numbers = np.sum(mask, axis=1).astype(np.int32)
     S_new = np.zeros_like(S)
     score_new = np.zeros_like(score)
     X_new = np.zeros_like(X)+np.nan
@@ -66,4 +68,5 @@ def featurize_GTrans(batch, shuffle_fraction=0.):
     score = torch.from_numpy(score).float()
     X = torch.from_numpy(X).to(dtype=torch.float32)
     mask = torch.from_numpy(mask).to(dtype=torch.float32)
-    return X, S, score, mask, lengths
+
+    return X, S, score, mask, lengths, titles

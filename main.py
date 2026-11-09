@@ -3,7 +3,7 @@ import pickle
 import json
 import torch
 import os.path as osp
-
+import numpy as np
 
 import warnings
 
@@ -74,11 +74,12 @@ class Exp:
 
             if epoch % self.args.log_step == 0:
                 with torch.no_grad():
-                    valid_loss, valid_perplexity = self.valid()
+                    valid_losses, valid_acc_1s, valid_acc_5s, valid_acc_10s = self.valid(epoch)
 
                     # self._save(name=str(epoch))
-                    self.test()
+                    #self.test()
                 
+<<<<<<< HEAD
                 print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
             
                 recorder(valid_loss, self.method.model, self.path)
@@ -93,19 +94,31 @@ class Exp:
         
     def valid(self):
         valid_loss, valid_perplexity = self.method.valid_one_epoch(self.valid_loader)
+=======
+                print(f" {sum(params.numel() for params in self.method.model.parameters() if params.requires_grad)} & ${valid_acc_1s.mean():.3f} \\pm {valid_acc_1s.std():.3f}$ & ${valid_acc_5s.mean():.3f} \\pm {valid_acc_5s.std():.3f}$ & ${valid_acc_10s.mean():.3f} \\pm {valid_acc_10s.std():.3f}$ & ${np.exp(valid_losses).mean():.3f} \\pm {np.exp(valid_losses).std():.3f}$ ")
+>>>>>>> 053bc61220af84fee36119aa2e73575d2f082ada
 
-        print_log('Valid Perp: {0:.4f}'.format(valid_perplexity))
-        
-        return valid_loss, valid_perplexity
+                #recorder(valid_loss, self.method.model, self.path)
+                #if recorder.early_stop:
+                #    print("Early stopping")
+                #    logging.info("Early stopping")
+                #    break
+            
+
+        #best_model_path = osp.join(self.path, 'checkpoint.pth')
+        #self.method.model.load_state_dict(torch.load(best_model_path))
+        with torch.no_grad():
+            test_losses, test_acc_1s, test_acc_5s, test_acc_10s = self.test()
+
+                
+            print(f" {sum(params.numel() for params in self.method.model.parameters() if params.requires_grad)} & ${test_acc_1s.mean():.3f} \\pm {test_acc_1s.std():.3f}$ & ${test_acc_5s.mean():.3f} \\pm {test_acc_5s.std():.3f}$ & ${test_acc_10s.mean():.3f} \\pm {test_acc_10s.std():.3f}$ & ${np.exp(test_losses).mean():.3f} \\pm {np.exp(test_losses).std():.3f}$ ")
+
+ 
+    def valid(self, epoch):
+        return self.method.valid_one_epoch(self.valid_loader, epoch=epoch)
 
     def test(self):
-        test_perplexity, test_recovery, test_subcat_recovery = self.method.test_one_epoch(self.test_loader)
-        print_log('Test Perp: {0:.4f}, Test Rec: {1:.4f}\n'.format(test_perplexity, test_recovery))
-
-        for cat in test_subcat_recovery.keys():
-            print_log('Category {0} Rec: {1:.4f}\n'.format(cat, test_subcat_recovery[cat]))
-
-        return test_perplexity, test_recovery
+        return self.method.valid_one_epoch(self.test_loader, epoch=-1, val_name="test")
 
 
 if __name__ == '__main__':
@@ -120,8 +133,12 @@ if __name__ == '__main__':
     #svpath = '/paper/demo/Zndesign-main/results/debug/'
     #exp.method.model.load_state_dict(torch.load(svpath+'zzw_38.pth'))
 
-    #print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-    #exp.train()
+    print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+    exp.train()
 
+<<<<<<< HEAD
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> testing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     test_perp, test_rec = exp.test()
+=======
+    exp.method.run.finish()
+>>>>>>> 053bc61220af84fee36119aa2e73575d2f082ada

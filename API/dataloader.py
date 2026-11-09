@@ -1,36 +1,98 @@
 import copy
 import os.path as osp
+import pandas as pd
+import h5py
+import numpy as np
 
 from API.cath_dataset import CATH
 from API.ts_dataset import TS
 
-from API.dataloader_gtrans import DataLoader_GTrans
-from API.featurizer import featurize_GTrans
+from API.dataloader_gtrans import DataLoader_GTrans, featurize_GTrans
+import inspect
+from API.h5_dataset import H5Dataset
+from API.pdb_dataset import PDBDataset
+import itertools
+import zlib
+def pick_frame(num_frames, protein_id, seed, frame_index=None):
+    if frame_index is not None:
+        if not -num_frames <= frame_index < num_frames:
+            raise IndexError("frame_index {} out of range for {} ({} frames)".format(
+                frame_index, protein_id, num_frames))
+        return int(frame_index % num_frames)
+    rng = np.random.default_rng([int(seed), zlib.crc32(protein_id.encode())])
+    return int(rng.integers(num_frames))
 
-
+# I am editing this to insert my own Dataset into the dataloader
 def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs):
-    if data_name == 'CATH' or data_name == 'TS50'or data_name == 'TS500':
-        cath_set = CATH(osp.join(data_root, 'cath'), mode='train', test_name='All')
-        train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
+    if not isinstance(kwargs, dict):
+        kwargs = vars(kwargs)
+    h5_path = kwargs["h5_name"]
+    index_path = kwargs["index_name"]
+    use_pdbs = kwargs["use_pdbs"]
+    test_val = kwargs["test_val"]
 
-        valid_set.change_mode('valid')
-        test_set.change_mode('test')
-        if data_name == 'TS50':
-            train_set = TS(osp.join(data_root, 'ts50.json'))
-            valid_set = TS(osp.join(data_root, 'ts50.json'))
-            test_set = TS(osp.join(data_root, 'ts50.json'))
-        if data_name == 'TS500':
-            train_set = TS(osp.join(data_root, 'ts500_300.json'))
-            valid_set = TS(osp.join(data_root, 'ts500_300.json'))
-            test_set = TS(osp.join(data_root, 'ts500_300.json'))
-        collate_fn = featurize_GTrans
+    h5_path = osp.join("..",h5_path)
 
-    train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers,
-                                     collate_fn=collate_fn)
-    valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers,
-                                     collate_fn=collate_fn)
-    test_loader = DataLoader_GTrans(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers,
-                                    collate_fn=collate_fn)
+    if(index_path == "atlas_cross_val_index.csv"):
+
+        split_df = pd.read_csv(osp.join("..", index_path))
+        val_mask = split_df["cross_val"] == 0 # change to whatever cross val sets you want
+        test_mask = split_df["cross_val"] == 4
+
+        #train_indices = split_df[(~val_mask) & (~test_mask)]["random_indices"].to_list()
+        #val_indices = split_df[val_mask]["random_indices"].to_list()
+        #test_indices = split_df[test_mask]["random_indices"].to_list()
+        
+        val_groups = split_df[val_mask]["pdb"].to_list()
+        train_groups = split_df[(~val_mask) & (~test_mask)]["pdb"].to_list()
+        test_groups = split_df[test_mask]["pdb"].to_list()
+
+
+    else:
+
+        index = pd.read_csv(osp.join("..", index_path))
+
+        train_groups = index[index["split"] == "train"]["domain"].tolist()
+        test_groups = index[index["split"] == "test"]["domain"].tolist()
+        val_groups = index[index["split"] == "validation"]["domain"].tolist()        
+    pdb_to_size = {}
+    def visit(name, obj):
+        if isinstance(obj, h5py.Group) and "coordinates" in obj:
+            pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
+    with h5py.File(h5_path, "r") as f:
+        f.visititems(visit)
+
+    train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
+    val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
+    test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
+
+
+    train_set = H5Dataset(h5_path, groups=train_groups)
+    valid_set = H5Dataset(h5_path, groups=val_groups)
+    test_set = H5Dataset(h5_path, groups=test_groups)
+    
+    """
+    train_set = PDBDataset(train_groups, h5_path, num_workers=16, verbose=True)
+    valid_set = PDBDataset(val_groups, h5_path, num_workers=16, verbose=True)
+    test_set = PDBDataset(test_groups, h5_path, num_workers=16, verbose=True)
+    """
+
+    print(len(train_set))
+    print(len(valid_set))
+    print(len(test_set))
+
+    print(len(train_groups))
+    print(len(val_groups))
+    print(len(test_groups))
+
+
+    collate_fn = featurize_GTrans
+
+    train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    test_loader = DataLoader_GTrans(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    # test
+    assert len(next(iter(train_loader))) == 6, "train_loader does not output 6 values"
 
     return train_loader, valid_loader, test_loader
 

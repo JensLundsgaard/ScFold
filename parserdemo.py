@@ -45,5 +45,9 @@ def create_parser():
     parser.add_argument('--edge_direct', default=1, type=int)
     parser.add_argument('--virtual_num', default=3, type=int)
     
+    parser.add_argument('--h5-name', default="", type=str)
+    parser.add_argument('--index-name', default="", type=str)
+    parser.add_argument('--use-pdbs', action="store_true")
+    parser.add_argument('--test-val', action="store_true")
 
     return parser.parse_args()
