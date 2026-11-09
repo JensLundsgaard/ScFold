@@ -18,6 +18,7 @@ class H5Dataset(data.Dataset):
     BACKBONE_ATOMS = ["CA", "N", "C", "O"]
     REQUIRED_DATASETS = {"coordinates", "dihedrals", "spinet_features","frame_maps","residues"}
     ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
+    RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
 
     def __init__(self, h5_path, random_indices=None, groups=None):
         self.h5_path = h5_path
@@ -40,7 +41,8 @@ class H5Dataset(data.Dataset):
         group_name = self.groups[group_idx]
 
         coordinates = self.h5_file[group_name]["coordinates"][:, seq_idx]
-        y = "".join([seq1(str(res.decode()[:3])) for res in self.h5_file[group_name]["residues"][:]])
+        y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3]))) for res in self.h5_file[group_name]["residues"][:]])
+
         y = y.upper()
         assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char not in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
 
