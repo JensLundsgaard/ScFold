@@ -25,6 +25,7 @@ class H5Dataset(data.Dataset):
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
+        self.step = 16
 
         with h5py.File(self.h5_path) as f:
             self.build_groups(f)
@@ -68,7 +69,7 @@ class H5Dataset(data.Dataset):
                 index.append((i, j))
         else:
             for i, group_name in enumerate(self.groups):
-                for j in range(h5_file[group_name]["coordinates"].shape[1]): # let's just use the first 200, we can do more later
-                    index.append((i, j)) # otherwise we need to feed in whole sequences to do majority voting on
+                for j in range(0, h5_file[group_name]["coordinates"].shape[1], self.step):
+                    index.append((i, j)) 
         return index
 
