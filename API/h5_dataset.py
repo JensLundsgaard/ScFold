@@ -42,7 +42,7 @@ class H5Dataset(data.Dataset):
         coordinates = self.h5_file[group_name]["coordinates"][:, seq_idx]
         y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name]["residues"][:]])
         y = y.upper()
-        assert all((y_char in self.__class__.ALPHABET) for y_char in y)
+        assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
 
         traj_id = group_name
         return {'title':(traj_id, seq_idx), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
