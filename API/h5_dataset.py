@@ -17,6 +17,8 @@ from Bio.SeqUtils import seq1
 class H5Dataset(data.Dataset):
     BACKBONE_ATOMS = ["CA", "N", "C", "O"]
     REQUIRED_DATASETS = {"coordinates", "dihedrals", "spinet_features","frame_maps","residues"}
+    ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
+
     def __init__(self, h5_path, random_indices=None, groups=None):
         self.h5_path = h5_path
         self.h5_file = None
@@ -40,6 +42,7 @@ class H5Dataset(data.Dataset):
         coordinates = self.h5_file[group_name]["coordinates"][:, seq_idx]
         y = "".join([seq1(res.decode()[:3]) for res in self.h5_file[group_name]["residues"][:]])
         y = y.upper()
+        assert all((y_char in self.__class__.ALPHABET) for y_char in y)
 
         traj_id = group_name
         return {'title':(traj_id, seq_idx), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
