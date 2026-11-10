@@ -68,8 +68,8 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
 
 
     train_set = H5Dataset(h5_path, groups=train_groups)
-    valid_set = H5Dataset(h5_path, groups=val_groups)
-    test_set = H5Dataset(h5_path, groups=test_groups)
+    valid_set = H5Dataset(h5_path, groups=val_groups, max_len=256)
+    test_set = H5Dataset(h5_path, groups=test_groups, max_len=256)
     
     """
     train_set = PDBDataset(train_groups, h5_path, num_workers=16, verbose=True)
@@ -85,12 +85,12 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
     print(len(val_groups))
     print(len(test_groups))
 
-
     collate_fn = featurize_GTrans
 
-    train_loader = DataLoader_GTrans(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-    valid_loader = DataLoader_GTrans(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-    test_loader = DataLoader_GTrans(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    train_loader = DataLoader_GTrans(train_set, batch_size=256, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    valid_loader = DataLoader_GTrans(valid_set, batch_size=256, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    test_loader = DataLoader_GTrans(test_set, batch_size=256, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+
     # test
     assert len(next(iter(train_loader))) == 6, "train_loader does not output 6 values"
 

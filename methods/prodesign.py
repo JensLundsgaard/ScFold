@@ -130,7 +130,7 @@ class ProDesign(Base_method):
 
 
                 _, logits = self.model(h_V, h_E, E_idx, batch_id,S,mask, return_logit=True)
-
+                """
                 for idx in range(batch_id.max().item() + 1):
                     prot_mask = batch_id == idx
 
@@ -153,27 +153,13 @@ class ProDesign(Base_method):
                 """
                 logits = logits.reshape(batch_id.max().item() + 1, -1, 20)
                 S = S.reshape(batch_id.max().item() + 1, -1)
-                batch_id = batch_id.reshape(batch_id.max().item() + 1, -1)
-                assert (batch_id == torch.arange(batch_id.max().item() + 1, device=batch_id.device)[:, None]).all().item(), "S is misshapen"
 
-
-                logits = F.softmax(logits)
-                if epoch == 7:
-                    violin_logits = logits[::10, :20].cpu()
-                    for j in range(violin_logits.shape[1]):
-                        distributions = violin_logits[:, j].numpy()
-                        fig, ax = plt.subplots()
-                        ax.violinplot(distributions, np.arange(distributions.shape[0]), points=60, widths=0.7, showmeans=True, showextrema=True, showmedians=True)
-                        fig.savefig(os.path.join("..", f"{i}_{j}.png"))
-                        plt.close(fig)
-
-
-                grouped_logits = logits.argmax(dim=-1).T # num_res, 128
-                new_logits = batched_bincount(grouped_logits, torch.arange(20, device=grouped_logits.device)) # num_res, 20
+                logits = logits.mean(dim=0) # num_res, 128
 
                 targets = S[0] # num_res
-                """
-                batch_conf_mat = get_confusion_matrix(S.cpu(), logits.argmax(dim=-1).cpu(),len(DataLoader_GTrans.alphabet))
+
+                batch_conf_mat = get_confusion_matrix(targets.cpu(), logits.argmax(dim=-1).cpu(), len(DataLoader_GTrans.alphabet))
+
                 global_confusion_mat += batch_conf_mat
 
                 diag = batch_conf_mat.diag()
@@ -181,11 +167,24 @@ class ProDesign(Base_method):
                 precision = torch.nan_to_num(diag / batch_conf_mat.sum(dim=0), 0.0)
                 f1 = torch.nan_to_num(2 * (precision * recall) / (precision + recall), 0.0)
 
-
                 for k, amino_acid in enumerate(DataLoader_GTrans.alphabet):
                      precisions[amino_acid].append(precision[k].item())
                      recalls[amino_acid].append(recall[k].item())
                      f1s[amino_acid].append(f1[k].item())
+
+                loss = self.criterion(logits, targets)
+                valid_losses.append(loss.item())
+                valid_acc_1s.append(top_k_acc(logits, targets, 1)) 
+                valid_acc_5s.append(top_k_acc(logits, targets, 5)) 
+                valid_acc_10s.append(top_k_acc(logits, targets, 10)) 
+
+                seq_name, seq_idx = titles[0]
+                seq_preds = "".join([valid_loader.__class__.alphabet[pred] for pred in logits.argmax(dim=-1).cpu().tolist()])
+                seqs.append(seq_preds)
+                seq_names.append(seq_name)
+                seq_idxs.append(seq_idx)
+
+
         prf_dict = {}
         precisions = {key: torch.tensor(value) for key, value in precisions.items()}  # each value: (num_batches,), one entry per batch this amino acid appeared in
         recalls = {key: torch.tensor(value) for key, value in recalls.items()}        # each value: (num_batches,)

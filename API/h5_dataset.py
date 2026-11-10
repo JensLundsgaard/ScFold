@@ -20,12 +20,13 @@ class H5Dataset(data.Dataset):
     ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
     RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
 
-    def __init__(self, h5_path, random_indices=None, groups=None):
+    def __init__(self, h5_path, max_len=None, random_indices=None, groups=None):
         self.h5_path = h5_path
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
-        self.step = 64
+        self.step = 1
+        self.max_len = None
 
         with h5py.File(self.h5_path) as f:
             self.build_groups(f)
@@ -69,7 +70,7 @@ class H5Dataset(data.Dataset):
                 index.append((i, j))
         else:
             for i, group_name in enumerate(self.groups):
-                for j in range(0, h5_file[group_name]["coordinates"].shape[1], self.step):
+                for j in range(0, h5_file[group_name]["coordinates"].shape[1] if self.max_len is None else self.max_len, self.step):
                     index.append((i, j)) 
         return index
 
