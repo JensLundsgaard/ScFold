@@ -100,7 +100,6 @@ class ProDesign(Base_method):
         global_confusion_mat = torch.zeros(20, 20)
         with torch.no_grad():
             for i, batch in enumerate(valid_pbar):
-                print(len(batch))
                 X, S, score, mask, lengths = cuda(batch[:-1], device=self.device)
                 titles = batch[-1]
 
