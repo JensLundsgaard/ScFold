@@ -38,7 +38,7 @@ class H5Dataset(data.Dataset):
                 y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3])) for res in obj["residues"][:]])
                 assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char not in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
                 for idx in range(coordinates.shape[1]):
-                    self.samples.append({'title':(group_name, seq_idx * self.step), 'seq':y} | {atom: coordinates[:,idx,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)})
+                    self.samples.append({'title':(group_name, idx * self.step), 'seq':y} | {atom: coordinates[:,idx,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)})
 
 
         with h5py.File(self.h5_path) as f:
