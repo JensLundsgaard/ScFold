@@ -26,13 +26,13 @@ class AvgLogitsBatchSampler(data.BatchSampler):
     """
     return a bunch of frames from the same trajectory together
     """
-    def __init__(self, raw_data):
+    def __init__(self, raw_data, subsequence=128, step=32):
         super().__init__([], 1, False)
         list_names = [d["title"][0] for d in raw_data]
         self.names = list(set(list_names))
         self.index = list(enumerate(list_names))
         self.index = sorted(self.index, key=lambda tup: self.names.index(tup[1])) # sort names so it's in the right order and the for\while loop below is O(n)
-        self.batches = []
+        batches = []
         save_idx = 0
         for name in self.names:
             batch = []
@@ -40,8 +40,11 @@ class AvgLogitsBatchSampler(data.BatchSampler):
                 batch.append(self.index[save_idx][0])
                 save_idx += 1
             if batch:
-                self.batches.append(batch)
-
+                batches.append(batch)
+        self.subsequence = subsequence
+        self.step = step
+        self.batches = [[batch[i:i+self.subsequence] for i in range(0,len(batch)-self.subsequence+1, self.step)] for batch in batches]
+        self.batches = [b for batch in self.batches for b in batch]# flatten
 
     def __iter__(self):
         return iter(self.batches)
@@ -98,9 +101,9 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
 
     """
 
-    train_set = H5Dataset(h5_path, groups=train_groups)
-    valid_set = H5Dataset(h5_path, groups=val_groups)
-    test_set = H5Dataset(h5_path, groups=test_groups)
+    train_set = H5Dataset(h5_path, groups=train_groups, step=16)
+    valid_set = H5Dataset(h5_path, groups=val_groups, step=1)
+    test_set = H5Dataset(h5_path, groups=test_groups, step=1)
     
     """
     train_set = PDBDataset(train_groups, h5_path, num_workers=16, verbose=True)

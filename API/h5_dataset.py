@@ -20,12 +20,12 @@ class H5Dataset(data.Dataset):
     ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
     RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
 
-    def __init__(self, h5_path, random_indices=None, groups=None):
+    def __init__(self, h5_path, random_indices=None, groups=None, step=16):
         self.h5_path = h5_path
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
-        self.step = 16
+        self.step = step
 
         self.samples = []
         use_split = self.groups is not None
