@@ -20,48 +20,41 @@ class H5Dataset(data.Dataset):
     ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
     RESIDUE_ALIASES = {"HSD": "HIS", "HSE": "HIS", "HSP": "HIS", "HID": "HIS", "HIE": "HIS", "HIP": "HIS", "ASH": "ASP", "GLH": "GLU","LYN": "LYS", "CYM": "CYS", "CYX": "CYS", "MSE": "MET"}
 
-    def __init__(self, h5_path, max_len=None, random_indices=None, groups=None):
+    def __init__(self, h5_path, random_indices=None, groups=None):
         self.h5_path = h5_path
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
         self.step = 1
-        self.max_len = None
+
+        self.samples = []
+        use_split = self.groups is not None
+        split = self.groups
+
+        def visit(name, obj):
+            group_name = name.split("/")[0]
+            if isinstance(obj, h5py.Group) and all(ds in obj for ds in self.__class__.REQUIRED_DATASETS) and (use_split <= (group_name in split)):
+                coordinates = self.h5_file[group_name]["coordinates"][:, ::self.step]
+                y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3])) for res in self.h5_file[group_name]["residues"][:]])
+                assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char not in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
+                for idx in range(coordinates.shape[1]):
+                    self.samples.append({'title':(group_name, seq_idx * self.step), 'seq':y} | {atom: coordinates[:,idx,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)})
+
 
         with h5py.File(self.h5_path) as f:
-            self.build_groups(f)
-            self.index = self.build_static_index(f)
+            f.visititems(visit)
+
+            
+               
 
     def __len__(self):
         return len(self.index)
     
     def get_item(self, idx):
-        if self.h5_file is None:
-            self.h5_file = h5py.File(self.h5_path, "r", libver="latest", swmr=True)
-            
-        group_idx, seq_idx = self.index[idx]
-        group_name = self.groups[group_idx]
-
-        coordinates = self.h5_file[group_name]["coordinates"][:, seq_idx]
-        y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3])) for res in self.h5_file[group_name]["residues"][:]])
-
-        y = y.upper()
-        assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char not in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
-
-        traj_id = group_name
-        return {'title':(traj_id, seq_idx), 'seq':y} | {atom: coordinates[:,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)}
+        return self.samples[idx]
 
     def __getitem__(self, idx):
         return self.get_item(idx)
-
-    def build_groups(self, h5_file):
-           use_split = self.groups is not None
-           split = self.groups
-           self.groups = []
-           def visit(name, obj):
-               if isinstance(obj, h5py.Group) and all(ds in obj for ds in self.__class__.REQUIRED_DATASETS) and (use_split <= (name.split("/")[0] in split)):
-                   self.groups.append(name)
-           h5_file.visititems(visit)
 
     def build_static_index(self, h5_file):
         index = []

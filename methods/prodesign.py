@@ -34,25 +34,7 @@ def top_k_acc(logits:torch.Tensor, targets:torch.Tensor, k:int):
     correct_mask = torch.einsum("bi,bi->b", hot_logits, F.one_hot(targets, num_classes=logits.shape[1]).float())
     return correct_mask.sum().item() / correct_mask.shape[0] 
 
-def batched_bincount(x: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
-   
-    if x.dtype != torch.long:
-        raise TypeError("Input tensor x must be of dtype torch.long")
-    if values.ndim != 1:
-        raise ValueError("values must be a 1D tensor of unique possible values")
-
-    B, N = x.shape
-    num_values = values.numel()
-
-    value_to_index = torch.empty(values.max().item() + 1, dtype=torch.long, device=x.device)
-    value_to_index[values] = torch.arange(num_values, device=x.device)
-    idx = value_to_index[x]  # Shape: (B, N)
-
-    counts = torch.zeros((B, num_values), dtype=torch.long, device=x.device)
-
-    counts.scatter_add_(1, idx, torch.ones_like(idx, dtype=torch.long))
-
-    return counts 
+ 
 def get_confusion_matrix(gt_indices, pred_indices, num_classes):
     gt_one_hot = F.one_hot(gt_indices, num_classes=num_classes).float()
     pred_one_hot = F.one_hot(pred_indices, num_classes=num_classes).float()
