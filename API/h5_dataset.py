@@ -48,22 +48,11 @@ class H5Dataset(data.Dataset):
                
 
     def __len__(self):
-        return len(self.index)
+        return len(self.samples)
     
     def get_item(self, idx):
         return self.samples[idx]
 
     def __getitem__(self, idx):
         return self.get_item(idx)
-
-    def build_static_index(self, h5_file):
-        index = []
-        if self.random_indices is not None:
-            for i, j in zip(range(len(self.groups)), self.random_indices):
-                index.append((i, j))
-        else:
-            for i, group_name in enumerate(self.groups):
-                for j in range(0, h5_file[group_name]["coordinates"].shape[1] if self.max_len is None else self.max_len, self.step):
-                    index.append((i, j)) 
-        return index
 
