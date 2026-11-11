@@ -6,7 +6,7 @@ import numpy as np
 
 from API.cath_dataset import CATH
 from API.ts_dataset import TS
-
+from torch.utils import data
 from API.dataloader_gtrans import DataLoader_GTrans, featurize_GTrans
 import inspect
 from API.h5_dataset import H5Dataset
