@@ -83,18 +83,20 @@ def load_data(data_name, method, batch_size, data_root, num_workers=8, **kwargs)
         test_groups = index[index["split"] == "test"]["domain"].tolist()
         val_groups = index[index["split"] == "validation"]["domain"].tolist()        
 
-    """pdb_to_size = {}
+    """
+
+    pdb_to_size = {}
     def visit(name, obj):
         if isinstance(obj, h5py.Group) and "coordinates" in obj:
             pdb_to_size[name.split("/")[0]] = obj["coordinates"].shape[1]
     with h5py.File(h5_path, "r") as f:
         f.visititems(visit)
-    """
 
     train_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in train_groups]
     val_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in val_groups]
     test_indices = [pick_frame(pdb_to_size[pdb_id], pdb_id, 0) for pdb_id in test_groups]
 
+    """
 
     train_set = H5Dataset(h5_path, groups=train_groups)
     valid_set = H5Dataset(h5_path, groups=val_groups)
