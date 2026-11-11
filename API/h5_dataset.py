@@ -25,7 +25,7 @@ class H5Dataset(data.Dataset):
         self.h5_file = None
         self.groups = groups
         self.random_indices = random_indices
-        self.step = 1
+        self.step = 16
 
         self.samples = []
         use_split = self.groups is not None
@@ -34,8 +34,8 @@ class H5Dataset(data.Dataset):
         def visit(name, obj):
             group_name = name.split("/")[0]
             if isinstance(obj, h5py.Group) and all(ds in obj for ds in self.__class__.REQUIRED_DATASETS) and (use_split <= (group_name in split)):
-                coordinates = self.h5_file[group_name]["coordinates"][:, ::self.step]
-                y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3])) for res in self.h5_file[group_name]["residues"][:]])
+                coordinates = obj["coordinates"][:, ::self.step]
+                y = "".join([seq1(self.__class__.RESIDUE_ALIASES.get(res.decode()[:3], res.decode()[:3])) for res in obj["residues"][:]])
                 assert all((y_char in self.__class__.ALPHABET) for y_char in y), f"y contains: {[y_char for y_char in y if (y_char not in self.__class__.ALPHABET)][0]} which is not in {self.__class__.ALPHABET}"
                 for idx in range(coordinates.shape[1]):
                     self.samples.append({'title':(group_name, seq_idx * self.step), 'seq':y} | {atom: coordinates[:,idx,i] for i, atom in enumerate(self.__class__.BACKBONE_ATOMS)})
