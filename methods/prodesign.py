@@ -63,7 +63,7 @@ class ProDesign(Base_method):
     def train_one_epoch(self, train_loader):
         self.model.train()
         train_sum, train_weights = 0., 0.
-
+        use_scheduler = True
         train_pbar = tqdm(train_loader)
         for step_idx, batch in enumerate(itertools.islice(train_pbar,4999)): # have to slice out the first 5000 batches else scheduler will fail
             self.optimizer.zero_grad()  # 模型中所有可学习参数的梯度归零
@@ -76,8 +76,12 @@ class ProDesign(Base_method):
             loss = self.criterion(log_probs, S)  # 计算预测值和目标值s之间的损失
             loss.backward()  # 计算损失函数对模型参数的梯度
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
-            self.optimizer.step()  # 更新模型的参数
-            self.scheduler.step()  # 更新优化器的学习率的方法
+            self.optimizer.step()  # 更新模型的参数 
+            if use_scheduler:
+                try:
+                    self.scheduler.step()  # 更新优化器的学习率的方法
+                except ValueError as e:
+                    use_scheduler = False
 
             train_sum += torch.sum(loss * mask).cpu().data.numpy()
             train_weights += torch.sum(mask).cpu().data.numpy()
