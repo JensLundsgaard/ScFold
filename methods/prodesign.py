@@ -65,7 +65,7 @@ class ProDesign(Base_method):
         train_sum, train_weights = 0., 0.
         use_scheduler = True
         train_pbar = tqdm(train_loader)
-        for step_idx, batch in enumerate(itertools.islice(train_pbar,4999)): # have to slice out the first 5000 batches else scheduler will fail
+        for step_idx, batch in enumerate(train_pbar): # have to slice out the first 5000 batches else scheduler will fail
             self.optimizer.zero_grad()  # 模型中所有可学习参数的梯度归零
             X, S, score, mask, lengths = cuda(batch[:-1], device=self.device)
             X, S, score, h_V, h_E, E_idx, batch_id, mask_bw, mask_fw, decoding_order = self.model._get_features(S,
